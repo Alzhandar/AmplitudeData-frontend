@@ -19,10 +19,14 @@ const initialState: DashboardState = {
   lastUpdatedAt: null,
 };
 
-export function useAnalyticsDashboard(startDate: string, endDate: string, windowHours: number) {
+export function useAnalyticsDashboard(startDate: string, endDate: string, windowHours: number, enabled: boolean = true) {
   const [state, setState] = useState<DashboardState>(initialState);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     const controller = new AbortController();
 
     const load = async () => {
@@ -61,7 +65,7 @@ export function useAnalyticsDashboard(startDate: string, endDate: string, window
     return () => {
       controller.abort();
     };
-  }, [startDate, endDate, windowHours]);
+  }, [startDate, endDate, windowHours, enabled]);
 
   return state;
 }

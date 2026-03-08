@@ -7,11 +7,15 @@ function getBackendBaseUrl(): string {
 export async function proxyGet(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
   const search = request.nextUrl.search || "";
+  const authorization = request.headers.get("authorization") || "";
 
   try {
     const response = await fetch(`${backendBaseUrl}${backendPath}${search}`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
       cache: "no-store",
     });
 
@@ -34,12 +38,16 @@ export async function proxyGet(request: NextRequest, backendPath: string) {
 
 export async function proxyPost(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
+  const authorization = request.headers.get("authorization") || "";
 
   try {
     const body = await request.text();
     const response = await fetch(`${backendBaseUrl}${backendPath}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
       body,
       cache: "no-store",
     });

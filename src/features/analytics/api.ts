@@ -28,6 +28,17 @@ function buildUrl(path: string, params?: Record<string, string | number>) {
   return `${API_BASE_URL}${path}${serialized ? `?${serialized}` : ""}`;
 }
 
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  const token = window.localStorage.getItem("auth_token");
+  if (!token) {
+    return {};
+  }
+  return { Authorization: `Token ${token}` };
+}
+
 async function parseErrorMessage(response: Response): Promise<string> {
   const raw = await response.text();
 
@@ -62,6 +73,7 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeader(),
     },
     cache: "no-store",
     signal,
@@ -81,7 +93,10 @@ async function postJson<TBody, TResponse>(
 ): Promise<TResponse> {
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeader(),
+    },
     body: JSON.stringify(body),
     cache: "no-store",
     signal,
