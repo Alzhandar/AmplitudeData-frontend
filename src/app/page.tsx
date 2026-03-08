@@ -20,6 +20,7 @@ export default function Home() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState("Admin");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
   const [search, setSearch] = useState("");
@@ -40,8 +41,9 @@ export default function Home() {
 
     let mounted = true;
     authApi.me()
-      .then(() => {
+      .then((me) => {
         if (!mounted) return;
+        setUsername(me.username || "Admin");
         setAuthenticated(true);
         setAuthChecked(true);
       })
@@ -136,7 +138,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#edf1f8]">
-      <TopNavbar />
+      <TopNavbar username={username} />
 
       <main className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         <div className="mb-6">

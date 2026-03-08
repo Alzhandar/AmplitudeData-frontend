@@ -1,6 +1,10 @@
 import Image from "next/image";
 
-export function TopNavbar() {
+type TopNavbarProps = {
+  username?: string;
+};
+
+export function TopNavbar({ username = "Admin" }: TopNavbarProps) {
   return (
     <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -26,7 +30,7 @@ export function TopNavbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <span className="text-sm font-medium text-gray-700">Admin</span>
+            <span className="text-sm font-medium text-gray-700">{username}</span>
           </div>
         </div>
       </div>
