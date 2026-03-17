@@ -4,10 +4,27 @@ function getBackendBaseUrl(): string {
   return (process.env.BACKEND_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 }
 
+function isSelfProxyLoop(request: NextRequest, backendBaseUrl: string): boolean {
+  try {
+    return new URL(backendBaseUrl).origin === request.nextUrl.origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function proxyGet(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
   const search = request.nextUrl.search || "";
   const authorization = request.headers.get("authorization") || "";
+
+  if (isSelfProxyLoop(request, backendBaseUrl)) {
+    return NextResponse.json(
+      {
+        detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop.",
+      },
+      { status: 500 },
+    );
+  }
 
   try {
     const response = await fetch(`${backendBaseUrl}${backendPath}${search}`, {
@@ -39,6 +56,15 @@ export async function proxyGet(request: NextRequest, backendPath: string) {
 export async function proxyPost(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
   const authorization = request.headers.get("authorization") || "";
+
+  if (isSelfProxyLoop(request, backendBaseUrl)) {
+    return NextResponse.json(
+      {
+        detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop.",
+      },
+      { status: 500 },
+    );
+  }
 
   try {
     const body = await request.text();

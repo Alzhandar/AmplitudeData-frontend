@@ -17,6 +17,12 @@ NEXT_PUBLIC_API_BASE_URL=/api
 BACKEND_BASE_URL=http://localhost:8000
 ```
 
+Production example:
+
+```bash
+BACKEND_BASE_URL=https://api.avametric.online
+```
+
 По умолчанию frontend обращается к backend через Next.js API proxy (`/api/amplitude/*`), чтобы избежать CORS ошибок типа `Load failed`.
 
 ## Run
