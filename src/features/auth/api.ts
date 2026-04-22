@@ -1,29 +1,40 @@
-type LoginResponse = {
-  token: string;
-  user: {
-    id: number;
-    username: string;
-  };
-  iin: string;
-};
+import { PortalPage } from "@/features/auth/permissions";
 
-type MeResponse = {
+export type AuthUser = {
   id: number;
-  username: string;
+  email: string;
+  full_name: string;
+  position: {
+    guid: string;
+    name: string;
+  };
 };
 
-type LoginPayload = {
-  username: string;
+export type LoginResponse = {
+  token: string;
+  user: AuthUser;
+  iin: string;
+  allowed_pages: PortalPage[];
+};
+
+export type MeResponse = {
+  user: AuthUser;
+  iin: string;
+  allowed_pages: PortalPage[];
+};
+
+export type LoginPayload = {
+  email: string;
   password: string;
 };
 
-type RegisterPayload = {
-  username: string;
+export type RegisterPayload = {
+  email: string;
   password: string;
   iin: string;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+const API_BASE_URL = "/api";
 
 async function parseErrorMessage(response: Response): Promise<string> {
   const raw = await response.text();

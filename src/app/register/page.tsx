@@ -8,7 +8,7 @@ import { authApi } from "@/features/auth/api";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [iin, setIin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
     try {
       const result = await authApi.register({
-        username: username.trim(),
+        email: email.trim().toLowerCase(),
         password,
         iin: iin.trim(),
       });
@@ -41,15 +41,15 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
       <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
         <h1 className="text-2xl font-bold text-slate-900">Регистрация</h1>
-        <p className="mt-1 text-sm text-slate-500">Укажи ИИН. Доступ будет проверен по позиции сотрудника.</p>
+        <p className="mt-1 text-sm text-slate-500">Укажите Email, пароль и ИИН сотрудника.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Логин</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
               required
             />

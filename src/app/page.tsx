@@ -1,26 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { ActivityTable } from "@/features/analytics/components/activity-table";
 import { ErrorBanner } from "@/features/analytics/components/error-banner";
 import { FiltersBar } from "@/features/analytics/components/filters-bar";
 import { StatsCards } from "@/features/analytics/components/stats-cards";
-import { TopNavbar } from "@/features/analytics/components/top-navbar";
 import { UserHistoryPanel } from "@/features/analytics/components/user-history-panel";
 import { analyticsApi } from "@/features/analytics/api";
-import { authApi } from "@/features/auth/api";
+import { useAuthGuard } from "@/features/auth/use-auth-guard";
+import { AppShell } from "@/features/navigation/components/app-shell";
 import { useAnalyticsDashboard } from "@/features/analytics/hooks";
 import { DailyActivityItem } from "@/features/analytics/types";
 
 const today = new Date().toISOString().slice(0, 10);
 
 export default function Home() {
-  const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [username, setUsername] = useState("Admin");
+  const { ready, authenticated, hasPageAccess, profile, allowedPages, logout } = useAuthGuard("analytics");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
   const [search, setSearch] = useState("");
@@ -30,34 +26,6 @@ export default function Home() {
   const [historyRows, setHistoryRows] = useState<DailyActivityItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const { activity, stats, loading, error, lastUpdatedAt } = useAnalyticsDashboard(startDate, endDate, windowHours, authenticated);
-
-  useEffect(() => {
-    const token = window.localStorage.getItem("auth_token");
-    if (!token) {
-      router.replace("/login");
-      setAuthChecked(true);
-      return;
-    }
-
-    let mounted = true;
-    authApi.me()
-      .then((me) => {
-        if (!mounted) return;
-        setUsername(me.username || "Admin");
-        setAuthenticated(true);
-        setAuthChecked(true);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        window.localStorage.removeItem("auth_token");
-        router.replace("/login");
-        setAuthChecked(true);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [router]);
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = search.trim().toLowerCase();
@@ -128,7 +96,7 @@ export default function Home() {
     }
   };
 
-  if (!authChecked || !authenticated) {
+  if (!ready || !authenticated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#edf1f8]">
         <p className="text-sm text-slate-600">Проверка доступа...</p>
@@ -136,29 +104,24 @@ export default function Home() {
     );
   }
 
+  if (!hasPageAccess) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#edf1f8] px-4">
+        <p className="text-sm text-slate-600">У вас нет доступа к разделу аналитики.</p>
+      </main>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#edf1f8]">
-      <TopNavbar username={username} />
-
-      <main className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Дашборд</h1>
-            <button
-              type="button"
-              onClick={async () => {
-                await authApi.logout();
-                window.localStorage.removeItem("auth_token");
-                router.replace("/login");
-              }}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Выйти
-            </button>
-          </div>
-          <p className="mt-1 text-sm text-slate-500">Мониторинг мобильной активности и присутствия пользователей в реальном времени.</p>
-        </div>
-
+    <AppShell
+      title="Панель аналитики"
+      subtitle="Мониторинг активности и присутствия пользователей в мобильном приложении"
+      fullName={profile.full_name}
+      positionName={profile.position?.name || ""}
+      allowedPages={allowedPages}
+      onLogout={logout}
+    >
+      <div className="space-y-6">
         <FiltersBar
           startDate={startDate}
           endDate={endDate}
@@ -173,11 +136,11 @@ export default function Home() {
 
         {error ? <div className="mt-4"><ErrorBanner message={error} /></div> : null}
 
-        <div className="mt-6">
+        <div>
           <StatsCards stats={stats} loading={loading} />
         </div>
 
-        <div className="mt-6">
+        <div>
           <ActivityTable
             rows={filteredRows}
             loading={loading}
@@ -191,7 +154,7 @@ export default function Home() {
             selectedRowKey={selectedRowKey}
           />
         </div>
-      </main>
+      </div>
 
       <UserHistoryPanel
         selectedRow={selectedRow}
@@ -203,6 +166,6 @@ export default function Home() {
         }}
         onLoadHistory={loadUserHistory}
       />
-    </div>
+    </AppShell>
   );
 }
