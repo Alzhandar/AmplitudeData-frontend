@@ -6,6 +6,7 @@ import { AppShell } from "@/features/navigation/components/app-shell";
 import { useAuthGuard } from "@/features/auth/use-auth-guard";
 import { pushDispatchApi } from "@/features/push-dispatch/api";
 import { NotificationCityOption, PushTarget } from "@/features/push-dispatch/types";
+import { CityPicker } from "@/features/push-dispatch/components/CityPicker";
 import { AuthLoadingScreen } from "@/features/common/components/AuthLoadingScreen";
 import { Button } from "@/features/common/components/ui/Button";
 import { Modal, ModalCancelButton } from "@/features/common/components/ui/Modal";
@@ -311,30 +312,21 @@ export default function PushDispatchPage() {
               </span>
             </div>
           ) : (
-            <div className="mt-4">
+              <div className="mt-4">
               {citiesError ? (
                 <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" role="alert">
                   {citiesError}
                 </p>
               ) : null}
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">Выберите город</span>
-                <select
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                  value={selectedCityId ?? ""}
-                  onChange={(e) => setSelectedCityId(e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">Выберите город</option>
-                  {cities.map((city) => (
-                    <option key={city.id} value={city.id}>
-                      {city.name_ru || city.name_kz}
-                    </option>
-                  ))}
-                </select>
-                <span className="mt-1 block text-xs text-slate-500">
-                  {citiesLoading ? "Загрузка городов..." : `Доступно городов: ${cities.length}`}
-                </span>
-              </label>
+              <div className="block">
+                <span className="mb-1.5 block text-sm font-medium text-slate-700">Выберите город</span>
+                <CityPicker
+                  cities={cities}
+                  value={selectedCityId}
+                  onChange={setSelectedCityId}
+                  loading={citiesLoading}
+                />
+              </div>
             </div>
           )}
         </div>
