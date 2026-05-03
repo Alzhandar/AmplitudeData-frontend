@@ -34,13 +34,13 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
         page: "analytics",
         href: "/",
         label: "Аналитика",
+        // eslint-disable-next-line @next/next/no-img-element
         icon: (active) => (
-          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M4 19h16" strokeLinecap="round" />
-            <path d="M7 16v-4" strokeLinecap="round" />
-            <path d="M12 16V7" strokeLinecap="round" />
-            <path d="M17 16v-6" strokeLinecap="round" />
-          </svg>
+          <img
+            src="/icon-analytics.svg"
+            alt=""
+            className={`h-5 w-5 object-contain transition-all ${active ? "" : "grayscale opacity-50 group-hover:opacity-75 group-hover:grayscale-0"}`}
+          />
         ),
       },
     ],
