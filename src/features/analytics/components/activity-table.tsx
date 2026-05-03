@@ -1,3 +1,4 @@
+import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { DailyActivityItem } from "../types";
 
 type ActivityTableProps = {
@@ -89,10 +90,25 @@ export function ActivityTable({
             </tr>
           </thead>
           <tbody>
-            {!loading && rows.length === 0 ? (
+            {loading && rows.length === 0 ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i} className="border-t border-gray-100">
+                  <td className="px-5 py-3"><Skeleton className="h-4 w-28" /></td>
+                  <td className="px-5 py-3"><Skeleton className="h-4 w-32" /></td>
+                  <td className="px-5 py-3"><Skeleton className="h-4 w-14" /></td>
+                  <td className="px-5 py-3"><Skeleton className="h-4 w-8" /></td>
+                  <td className="px-5 py-3"><Skeleton className="h-4 w-36" /></td>
+                </tr>
+              ))
+            ) : !loading && rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-gray-400">
-                  Нет данных
+                <td colSpan={5} className="px-5 py-16 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <svg className="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6M4 20h16a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-400">Нет данных за выбранный период</p>
+                  </div>
                 </td>
               </tr>
             ) : null}

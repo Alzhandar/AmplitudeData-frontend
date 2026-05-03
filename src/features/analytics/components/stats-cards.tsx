@@ -1,3 +1,4 @@
+import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { PresenceStats } from "../types";
 
 type StatsCardsProps = {
@@ -58,13 +59,17 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map((card) => (
         <article key={card.key} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-500">{card.label}</p>
-            <p className="mt-1 text-3xl font-extrabold text-gray-900">
-              {loading ? <span className="text-gray-300">—</span> : (stats?.[card.key] ?? 0).toLocaleString("ru-RU")}
-            </p>
+            {loading ? (
+              <Skeleton className="mt-2 h-9 w-20" />
+            ) : (
+              <p className="mt-1 text-3xl font-extrabold text-gray-900">
+                {(stats?.[card.key] ?? 0).toLocaleString("ru-RU")}
+              </p>
+            )}
           </div>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-full ${card.iconBg} ${card.iconColor}`}>
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.iconBg} ${card.iconColor}`}>
             {card.icon}
           </div>
         </article>

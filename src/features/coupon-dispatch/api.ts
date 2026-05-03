@@ -54,7 +54,7 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
 }
 
 export const couponDispatchApi = {
-  async listMarketingSales(search: string): Promise<MarketingSaleOption[]> {
+  async listMarketingSales(search: string, signal?: AbortSignal): Promise<MarketingSaleOption[]> {
     const response = await fetchWithTimeout(
       buildUrl("/coupon-dispatch/marketing-sales/", search ? { search } : undefined),
       {
@@ -64,6 +64,7 @@ export const couponDispatchApi = {
           ...getAuthHeader(),
         },
         cache: "no-store",
+        signal,
       },
     );
 

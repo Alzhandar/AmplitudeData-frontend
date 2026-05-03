@@ -11,6 +11,7 @@ import { analyticsApi } from "@/features/analytics/api";
 import { useAuthGuard } from "@/features/auth/use-auth-guard";
 import { AppShell } from "@/features/navigation/components/app-shell";
 import { useAnalyticsDashboard } from "@/features/analytics/hooks";
+import { AuthLoadingScreen } from "@/features/common/components/AuthLoadingScreen";
 import { DailyActivityItem } from "@/features/analytics/types";
 
 const today = new Date().toISOString().slice(0, 10);
@@ -25,14 +26,12 @@ export default function Home() {
   const [selectedRow, setSelectedRow] = useState<DailyActivityItem | null>(null);
   const [historyRows, setHistoryRows] = useState<DailyActivityItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const { activity, stats, loading, error, lastUpdatedAt } = useAnalyticsDashboard(startDate, endDate, windowHours, authenticated);
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = search.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return activity;
-    }
-
+    if (!normalizedQuery) return activity;
     return activity.filter((row) => {
       const phone = String(row.phone_number || "").toLowerCase();
       const userId = String(row.user_id || "").toLowerCase();
@@ -46,10 +45,7 @@ export default function Home() {
   }, [search, startDate, endDate]);
 
   const selectedRowKey = useMemo(() => {
-    if (!selectedRow) {
-      return null;
-    }
-
+    if (!selectedRow) return null;
     return `${selectedRow.user_id || ""}-${selectedRow.device_id || ""}-${selectedRow.phone_number || ""}`;
   }, [selectedRow]);
 
@@ -59,16 +55,15 @@ export default function Home() {
     const selectedDate = new Date(endDate);
     if (Number.isNaN(selectedDate.getTime())) return;
 
-    // Диапазон: 6 дней назад от endDate → endDate
     const historyEnd = endDate;
     const startDateObj = new Date(selectedDate);
     startDateObj.setDate(selectedDate.getDate() - 6);
     const historyStart = startDateObj.toISOString().slice(0, 10);
 
     setHistoryLoading(true);
+    setHistoryError(null);
     try {
       if (selectedRow.phone_number) {
-        // Используем новый endpoint с диапазоном дат
         const results = await analyticsApi.visitSearchByPhones({
           start_date: historyStart,
           end_date: historyEnd,
@@ -76,7 +71,6 @@ export default function Home() {
         });
         setHistoryRows(results);
       } else {
-        // Fallback: 7 параллельных запросов по дням, фильтр по user_id / device_id
         const requests: Promise<DailyActivityItem[]>[] = [];
         for (let offset = 0; offset < 7; offset += 1) {
           const historyDate = new Date(selectedDate);
@@ -91,25 +85,19 @@ export default function Home() {
         });
         setHistoryRows(matched);
       }
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : "Не удалось загрузить историю");
     } finally {
       setHistoryLoading(false);
     }
   };
 
   if (!ready || !authenticated) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#edf1f8]">
-        <p className="text-sm text-slate-600">Проверка доступа...</p>
-      </main>
-    );
+    return <AuthLoadingScreen />;
   }
 
   if (!hasPageAccess) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#edf1f8] px-4">
-        <p className="text-sm text-slate-600">У вас нет доступа к разделу аналитики.</p>
-      </main>
-    );
+    return <AuthLoadingScreen message="У вас нет доступа к разделу аналитики." />;
   }
 
   return (
@@ -136,33 +124,32 @@ export default function Home() {
 
         {error ? <div className="mt-4"><ErrorBanner message={error} /></div> : null}
 
-        <div>
-          <StatsCards stats={stats} loading={loading} />
-        </div>
+        <StatsCards stats={stats} loading={loading} />
 
-        <div>
-          <ActivityTable
-            rows={filteredRows}
-            loading={loading}
-            currentPage={currentPage}
-            pageSize={12}
-            onPageChange={setCurrentPage}
-            onSelectRow={(row) => {
-              setSelectedRow(row);
-              setHistoryRows([]);
-            }}
-            selectedRowKey={selectedRowKey}
-          />
-        </div>
+        <ActivityTable
+          rows={filteredRows}
+          loading={loading}
+          currentPage={currentPage}
+          pageSize={12}
+          onPageChange={setCurrentPage}
+          onSelectRow={(row) => {
+            setSelectedRow(row);
+            setHistoryRows([]);
+            setHistoryError(null);
+          }}
+          selectedRowKey={selectedRowKey}
+        />
       </div>
 
       <UserHistoryPanel
         selectedRow={selectedRow}
         historyRows={historyRows}
         loading={historyLoading}
+        error={historyError}
         onClose={() => {
           setSelectedRow(null);
           setHistoryRows([]);
+          setHistoryError(null);
         }}
         onLoadHistory={loadUserHistory}
       />

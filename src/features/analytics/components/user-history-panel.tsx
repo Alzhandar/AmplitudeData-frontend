@@ -1,9 +1,11 @@
+import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { DailyActivityItem } from "../types";
 
 type UserHistoryPanelProps = {
   selectedRow: DailyActivityItem | null;
   historyRows: DailyActivityItem[];
   loading: boolean;
+  error: string | null;
   onClose: () => void;
   onLoadHistory: () => void;
 };
@@ -65,6 +67,7 @@ export function UserHistoryPanel({
   selectedRow,
   historyRows,
   loading,
+  error,
   onClose,
   onLoadHistory,
 }: UserHistoryPanelProps) {
@@ -180,8 +183,23 @@ export function UserHistoryPanel({
               </button>
             </div>
 
-            {loading && <p className="mt-3 text-sm text-gray-400">Загрузка...</p>}
-            {!loading && historyRows.length === 0 && (
+            {loading && (
+              <div className="mt-3 space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-3.5 w-20" />
+                      <Skeleton className="h-5 w-14 rounded-full" />
+                    </div>
+                    <Skeleton className="mt-2 h-3 w-32" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {!loading && error && (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            )}
+            {!loading && !error && historyRows.length === 0 && (
               <p className="mt-3 text-sm text-gray-400">Нажмите «Загрузить» для получения данных</p>
             )}
 

@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: amplitude_frontend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NEXT_PUBLIC_API_BASE_URL: /api
       BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://host.docker.internal:8001}

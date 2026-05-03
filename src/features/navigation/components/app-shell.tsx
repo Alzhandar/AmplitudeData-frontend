@@ -52,33 +52,39 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
         page: "bonus-transactions",
         href: "/bonus-transactions",
         label: "Начисление бонусов",
+        // eslint-disable-next-line @next/next/no-img-element
         icon: (active) => (
-          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="12" cy="12" r="7" />
-            <path d="M9.5 10.5h5a1.5 1.5 0 0 1 0 3h-5a1.5 1.5 0 0 0 0 3h5" strokeLinecap="round" />
-          </svg>
+          <img
+            src="/icon-cashback.svg"
+            alt=""
+            className={`h-5 w-5 object-contain transition-all ${active ? "" : "grayscale opacity-50 group-hover:opacity-75 group-hover:grayscale-0"}`}
+          />
         ),
       },
       {
         page: "coupon-dispatch",
         href: "/coupon-dispatch",
         label: "Отправка купонов",
+        // eslint-disable-next-line @next/next/no-img-element
         icon: (active) => (
-          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M3 10.5a2.5 2.5 0 0 0 2.5-2.5h13A2.5 2.5 0 0 0 21 10.5v3A2.5 2.5 0 0 0 18.5 16h-13A2.5 2.5 0 0 0 3 13.5z" />
-            <path d="M12 8v8" strokeDasharray="2 2" />
-          </svg>
+          <img
+            src="/icon-coupon.svg"
+            alt=""
+            className={`h-5 w-5 object-contain transition-all ${active ? "" : "grayscale opacity-50 group-hover:opacity-75 group-hover:grayscale-0"}`}
+          />
         ),
       },
       {
         page: "push-dispatch",
         href: "/push-dispatch",
         label: "Отправка пушей",
+        // eslint-disable-next-line @next/next/no-img-element
         icon: (active) => (
-          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="M12 4a4 4 0 0 0-4 4v3.2c0 .7-.28 1.38-.78 1.88L6 14.5h12l-1.22-1.42A2.65 2.65 0 0 1 16 11.2V8a4 4 0 0 0-4-4z" />
-            <path d="M10 17a2 2 0 1 0 4 0" strokeLinecap="round" />
-          </svg>
+          <img
+            src="/icon-notification.svg"
+            alt=""
+            className={`h-5 w-5 object-contain transition-all ${active ? "" : "grayscale opacity-50 group-hover:opacity-75 group-hover:grayscale-0"}`}
+          />
         ),
       },
     ],
