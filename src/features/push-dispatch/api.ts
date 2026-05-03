@@ -1,4 +1,5 @@
 import { NotificationCityOption, SendPushPayload, SendPushResponse } from "@/features/push-dispatch/types";
+import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 const REQUEST_TIMEOUT_MS = 45000;
@@ -17,21 +18,7 @@ function getAuthHeader(): Record<string, string> {
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
-  const raw = await response.text();
-
-  try {
-    const parsed = JSON.parse(raw) as { detail?: string; non_field_errors?: string[] };
-    if (parsed.detail) {
-      return parsed.detail;
-    }
-    if (parsed.non_field_errors && parsed.non_field_errors.length > 0) {
-      return parsed.non_field_errors.join(", ");
-    }
-  } catch {
-    // no-op
-  }
-
-  return raw || `Request failed with status ${response.status}`;
+  return parseApiErrorMessage(response);
 }
 
 function buildUrl(path: string, params?: Record<string, string | number>) {
@@ -57,10 +44,7 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
       signal: controller.signal,
     });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Превышено время ожидания ответа API. Попробуйте еще раз.");
-    }
-    throw error;
+    throw new Error(getNetworkErrorMessage(error));
   } finally {
     window.clearTimeout(timer);
   }

@@ -51,7 +51,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       {
         page: "bonus-transactions",
         href: "/bonus-transactions",
-        label: "Транзакция бонусов",
+        label: "Начисление бонусов",
         icon: (active) => (
           <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="12" cy="12" r="7" />

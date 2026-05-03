@@ -1,9 +1,8 @@
 import {
-  CouponDispatchJob,
-  CouponDispatchJobDetail,
-  CreateCouponDispatchJobPayload,
-  MarketingSaleOption,
-} from "@/features/coupon-dispatch/types";
+  BonusTransactionJob,
+  BonusTransactionJobDetail,
+  CreateBonusTransactionJobPayload,
+} from "@/features/bonus-transactions/types";
 import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
@@ -53,29 +52,9 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
   }
 }
 
-export const couponDispatchApi = {
-  async listMarketingSales(search: string): Promise<MarketingSaleOption[]> {
-    const response = await fetchWithTimeout(
-      buildUrl("/coupon-dispatch/marketing-sales/", search ? { search } : undefined),
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader(),
-        },
-        cache: "no-store",
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
-    }
-
-    return (await response.json()) as MarketingSaleOption[];
-  },
-
-  async listJobs(limit = 20): Promise<CouponDispatchJob[]> {
-    const response = await fetchWithTimeout(buildUrl("/coupon-dispatch/jobs/", { limit }), {
+export const bonusTransactionsApi = {
+  async listJobs(limit = 20): Promise<BonusTransactionJob[]> {
+    const response = await fetchWithTimeout(buildUrl("/bonus-transactions/jobs/", { limit }), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -88,11 +67,11 @@ export const couponDispatchApi = {
       throw new Error(await parseErrorMessage(response));
     }
 
-    return (await response.json()) as CouponDispatchJob[];
+    return (await response.json()) as BonusTransactionJob[];
   },
 
-  async getJob(jobId: number): Promise<CouponDispatchJobDetail> {
-    const response = await fetchWithTimeout(`${API_BASE_URL}/coupon-dispatch/jobs/${jobId}/`, {
+  async getJob(jobId: number): Promise<BonusTransactionJobDetail> {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/bonus-transactions/jobs/${jobId}/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -105,16 +84,15 @@ export const couponDispatchApi = {
       throw new Error(await parseErrorMessage(response));
     }
 
-    return (await response.json()) as CouponDispatchJobDetail;
+    return (await response.json()) as BonusTransactionJobDetail;
   },
 
-  async createJob(payload: CreateCouponDispatchJobPayload): Promise<CouponDispatchJobDetail> {
+  async createJob(payload: CreateBonusTransactionJobPayload): Promise<BonusTransactionJobDetail> {
     const formData = new FormData();
-    formData.append("title", payload.title);
-    formData.append("marketing_sale_id", String(payload.marketingSaleId));
-    if (payload.marketingSaleName) {
-      formData.append("marketing_sale_name", payload.marketingSaleName);
-    }
+    formData.append("description", payload.description);
+    formData.append("amount", String(payload.amount));
+    formData.append("start_date", payload.startDate);
+    formData.append("expiration_date", payload.expirationDate);
     if (payload.phonesText) {
       formData.append("phones_text", payload.phonesText);
     }
@@ -122,7 +100,7 @@ export const couponDispatchApi = {
       formData.append("excel_file", payload.excelFile);
     }
 
-    const response = await fetchWithTimeout(`${API_BASE_URL}/coupon-dispatch/jobs/`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/bonus-transactions/jobs/`, {
       method: "POST",
       headers: {
         ...getAuthHeader(),
@@ -135,6 +113,6 @@ export const couponDispatchApi = {
       throw new Error(await parseErrorMessage(response));
     }
 
-    return (await response.json()) as CouponDispatchJobDetail;
+    return (await response.json()) as BonusTransactionJobDetail;
   },
 };

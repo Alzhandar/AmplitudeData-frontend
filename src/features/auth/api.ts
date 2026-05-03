@@ -1,4 +1,5 @@
 import { PortalPage } from "@/features/auth/permissions";
+import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
 
 export type AuthUser = {
   id: number;
@@ -36,22 +37,17 @@ export type RegisterPayload = {
 
 const API_BASE_URL = "/api";
 
-async function parseErrorMessage(response: Response): Promise<string> {
-  const raw = await response.text();
+async function request(url: string, init: RequestInit): Promise<Response> {
   try {
-    const parsed = JSON.parse(raw) as { detail?: string };
-    if (parsed.detail) {
-      return parsed.detail;
-    }
-  } catch {
-    // no-op
+    return await fetch(url, init);
+  } catch (error) {
+    throw new Error(getNetworkErrorMessage(error));
   }
-  return raw || `Request failed with status ${response.status}`;
 }
 
 export const authApi = {
   async register(payload: RegisterPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+    const response = await request(`${API_BASE_URL}/auth/register/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -59,14 +55,14 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
+      throw new Error(await parseApiErrorMessage(response));
     }
 
     return (await response.json()) as LoginResponse;
   },
 
   async login(payload: LoginPayload): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+    const response = await request(`${API_BASE_URL}/auth/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -74,7 +70,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
+      throw new Error(await parseApiErrorMessage(response));
     }
 
     return (await response.json()) as LoginResponse;
@@ -82,7 +78,7 @@ export const authApi = {
 
   async me(): Promise<MeResponse> {
     const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
-    const response = await fetch(`${API_BASE_URL}/auth/me/`, {
+    const response = await request(`${API_BASE_URL}/auth/me/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -92,7 +88,7 @@ export const authApi = {
     });
 
     if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
+      throw new Error(await parseApiErrorMessage(response));
     }
 
     return (await response.json()) as MeResponse;
@@ -100,7 +96,7 @@ export const authApi = {
 
   async logout(): Promise<void> {
     const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
-    await fetch(`${API_BASE_URL}/auth/logout/`, {
+    await request(`${API_BASE_URL}/auth/logout/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

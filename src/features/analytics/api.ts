@@ -1,14 +1,7 @@
 import { DailyActivityItem, PresenceStats } from "./types";
+import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
-
-type ErrorPayload = {
-  detail?: string;
-  start_date?: string;
-  end_date?: string;
-  date?: string;
-  window_hours?: string;
-};
 
 export type VisitSearchByPhonesRequest = {
   start_date: string;
@@ -39,48 +32,24 @@ function getAuthHeader(): Record<string, string> {
   return { Authorization: `Token ${token}` };
 }
 
-async function parseErrorMessage(response: Response): Promise<string> {
-  const raw = await response.text();
-
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  let response: Response;
   try {
-    const parsed = JSON.parse(raw) as ErrorPayload;
-    if (parsed.detail) {
-      return parsed.detail;
-    }
-    if (parsed.start_date) {
-      return parsed.start_date;
-    }
-    if (parsed.end_date) {
-      return parsed.end_date;
-    }
-    if (parsed.date) {
-      return parsed.date;
-    }
-    if (parsed.window_hours) {
-      return parsed.window_hours;
-    }
-  } catch {
-    if (!raw.trim().startsWith("<!DOCTYPE html")) {
-      return raw;
-    }
+    response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+      },
+      cache: "no-store",
+      signal,
+    });
+  } catch (error) {
+    throw new Error(getNetworkErrorMessage(error));
   }
 
-  return `Request failed with status ${response.status}`;
-}
-
-async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-    cache: "no-store",
-    signal,
-  });
-
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
+    throw new Error(await parseApiErrorMessage(response));
   }
 
   return (await response.json()) as T;
@@ -91,19 +60,24 @@ async function postJson<TBody, TResponse>(
   body: TBody,
   signal?: AbortSignal,
 ): Promise<TResponse> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal,
+    });
+  } catch (error) {
+    throw new Error(getNetworkErrorMessage(error));
+  }
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
+    throw new Error(await parseApiErrorMessage(response));
   }
 
   return (await response.json()) as TResponse;

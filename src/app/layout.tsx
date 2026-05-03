@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Amplitude Frontend",
-  description: "Analytics dashboard for Amplitude backend",
+  title: "Avametric",
+  description: "Analytics dashboard for Avametric",
   icons: {
     icon: "/logo-new.svg",
     shortcut: "/logo-new.svg",
