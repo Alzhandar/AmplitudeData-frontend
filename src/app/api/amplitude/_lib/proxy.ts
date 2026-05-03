@@ -43,7 +43,13 @@ export async function proxyGet(request: NextRequest, backendPath: string) {
         "Content-Type": response.headers.get("Content-Type") || "application/json",
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("[api-proxy][GET] upstream request failed", {
+      backendBaseUrl,
+      backendPath,
+      search,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         detail: "Backend API unavailable",
@@ -85,7 +91,12 @@ export async function proxyPost(request: NextRequest, backendPath: string) {
         "Content-Type": response.headers.get("Content-Type") || "application/json",
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("[api-proxy][POST] upstream request failed", {
+      backendBaseUrl,
+      backendPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         detail: "Backend API unavailable",

@@ -50,7 +50,12 @@ export async function POST(request: NextRequest) {
         "Content-Type": response.headers.get("Content-Type") || "application/json",
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("[api-proxy][POST multipart] push-dispatch upstream request failed", {
+      backendBaseUrl,
+      backendPath: "/api/notifications/push-dispatch/",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         detail: "Backend API unavailable",
