@@ -21,8 +21,10 @@ export type CouponDispatchJobResult = {
 export type CouponDispatchJob = {
   id: number;
   title: string;
+  dispatch_mode: "marketing_sale" | "predefined_coupon";
   marketing_sale_id: number;
   marketing_sale_name: string;
+  valid_until: string | null;
   input_source: "manual" | "excel" | "mixed";
   status: CouponDispatchJobStatus;
   total_phones: number;
@@ -47,9 +49,11 @@ export type CouponDispatchJobDetail = CouponDispatchJob & {
 };
 
 export type CreateCouponDispatchJobPayload = {
+  dispatchMode: "marketing_sale" | "predefined_coupon";
   title: string;
-  marketingSaleId: number;
+  marketingSaleId?: number;
   marketingSaleName?: string;
+  validUntil: string;
   phonesText?: string;
   excelFile?: File | null;
 };

@@ -13,6 +13,8 @@ import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { StatusBadge } from "@/features/common/components/ui/StatusBadge";
 import { useToast } from "@/features/common/components/ui/Toast";
 import { useJobPolling } from "@/features/common/hooks/useJobPolling";
+import { ErrorLogPanel } from "@/features/common/components/ui/ErrorLogPanel";
+import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "-";
@@ -293,6 +295,7 @@ export default function BonusTransactionsPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                     <th className="px-3 py-2">Дата</th>
+                    <th className="px-3 py-2">Инициатор</th>
                     <th className="px-3 py-2">Причина</th>
                     <th className="px-3 py-2">Сумма</th>
                     <th className="px-3 py-2">Период</th>
@@ -306,6 +309,7 @@ export default function BonusTransactionsPage() {
                   {jobs.map((job) => (
                     <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
+                      <td className="px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[260px] px-3 py-2.5">
                         <p className="truncate font-medium text-slate-800" title={job.description}>{job.description}</p>
                       </td>
@@ -341,6 +345,7 @@ export default function BonusTransactionsPage() {
             <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
               {([
                 ["Причина", activeJob.description],
+                ["Инициатор", activeJob.initiated_by_email || "-"],
                 ["Сумма", String(activeJob.amount)],
                 ["Период", `${activeJob.start_date} – ${activeJob.expiration_date}`],
                 ["Всего телефонов", String(activeJob.total_phones)],
@@ -357,10 +362,7 @@ export default function BonusTransactionsPage() {
             </dl>
 
             {activeJob.error_log && (
-              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                <p className="font-semibold">Ошибки обработки</p>
-                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs">{activeJob.error_log}</pre>
-              </div>
+              <ErrorLogPanel errorLog={activeJob.error_log} />
             )}
 
             <div className="mt-5">
@@ -373,9 +375,9 @@ export default function BonusTransactionsPage() {
                     <thead className="sticky top-0 bg-slate-50">
                       <tr className="border-b border-slate-200 text-left text-slate-400">
                         <th className="px-3 py-2">Телефон</th>
-                        <th className="px-3 py-2">Guest ID</th>
-                        <th className="px-3 py-2">doc_guid</th>
-                        <th className="px-3 py-2">base_id</th>
+                        <th className="px-3 py-2">ID гостя</th>
+                        <th className="px-3 py-2">GUID документа</th>
+                        <th className="px-3 py-2">ID базы</th>
                         <th className="px-3 py-2">Статус</th>
                         <th className="px-3 py-2">Ошибка</th>
                       </tr>
@@ -392,7 +394,7 @@ export default function BonusTransactionsPage() {
                               {row.success ? "Успех" : "Ошибка"}
                             </span>
                           </td>
-                          <td className="max-w-[280px] truncate px-3 py-2 text-rose-600" title={row.error_message || ""}>{row.error_message || "-"}</td>
+                          <td className="max-w-[280px] truncate px-3 py-2 text-slate-600" title={translateErrorMessage(row.error_message)}>{translateErrorMessage(row.error_message)}</td>
                         </tr>
                       ))}
                     </tbody>

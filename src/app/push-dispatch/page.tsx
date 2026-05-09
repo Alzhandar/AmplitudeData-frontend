@@ -314,7 +314,7 @@ export default function PushDispatchPage() {
           ) : (
               <div className="mt-4">
               {citiesError ? (
-                <p className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800" role="alert">
+                <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
                   {citiesError}
                 </p>
               ) : null}

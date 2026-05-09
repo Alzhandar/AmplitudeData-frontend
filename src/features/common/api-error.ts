@@ -1,6 +1,18 @@
 type ApiErrorPayload = Record<string, unknown>;
 
 const TECHNICAL_MESSAGE_RE = /traceback|exception|stack|sql|internal server error|request failed with status|<!doctype|<html|syntaxerror|typeerror|referenceerror/i;
+const KNOWN_SERVER_MESSAGE_MAP = new Map<string, string>([
+  ["invalid credentials", "Неверный email или пароль."],
+  ["email and password are required", "Укажите email и пароль."],
+  ["email, password and iin are required", "Укажите email, пароль и ИИН."],
+  ["employee binding is missing. please register first", "Сотрудник не привязан. Сначала пройдите регистрацию."],
+  ["employee was not found or has no access to this site", "Сотрудник не найден или у него нет доступа к этому разделу."],
+  ["iin is already registered", "Этот ИИН уже зарегистрирован."],
+  ["email is already registered", "Этот email уже зарегистрирован."],
+  ["email or iin is already registered", "Email или ИИН уже зарегистрированы."],
+  ["use yyyy-mm-dd format", "Используйте формат даты ГГГГ-ММ-ДД."],
+  ["must be integer", "Поле должно быть целым числом."],
+]);
 
 function normalizeMessage(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -66,6 +78,12 @@ function isTechnicalMessage(message: string): boolean {
   return TECHNICAL_MESSAGE_RE.test(message) || message.length > 220;
 }
 
+function localizeKnownServerMessage(message: string): string {
+  const normalized = normalizeMessage(message);
+  const key = normalized.toLowerCase().replace(/\.$/, "");
+  return KNOWN_SERVER_MESSAGE_MAP.get(key) ?? normalized;
+}
+
 function buildUserMessage(status: number, candidate: string | null): string {
   const fallback = defaultStatusMessage(status);
 
@@ -81,7 +99,7 @@ function buildUserMessage(status: number, candidate: string | null): string {
     return fallback;
   }
 
-  return isTechnicalMessage(candidate) ? fallback : candidate;
+  return isTechnicalMessage(candidate) ? fallback : localizeKnownServerMessage(candidate);
 }
 
 export async function parseApiErrorMessage(response: Response): Promise<string> {

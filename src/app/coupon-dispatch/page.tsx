@@ -7,17 +7,40 @@ import { useAuthGuard } from "@/features/auth/use-auth-guard";
 import { couponDispatchApi } from "@/features/coupon-dispatch/api";
 import { CouponDispatchJob, CouponDispatchJobDetail, MarketingSaleOption } from "@/features/coupon-dispatch/types";
 import { AuthLoadingScreen } from "@/features/common/components/AuthLoadingScreen";
+import { CalendarField } from "@/features/common/components/CalendarField";
 import { Button } from "@/features/common/components/ui/Button";
 import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { StatusBadge } from "@/features/common/components/ui/StatusBadge";
 import { useToast } from "@/features/common/components/ui/Toast";
 import { useJobPolling } from "@/features/common/hooks/useJobPolling";
+import { ErrorLogPanel } from "@/features/common/components/ui/ErrorLogPanel";
+import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function getTodayIsoDate(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatIsoDate(value: string | null | undefined): string {
+  if (!value) return "-";
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return value;
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(date);
 }
 
 function formatGuestName(row: CouponDispatchJobDetail["results"][number]): string {
@@ -27,11 +50,19 @@ function formatGuestName(row: CouponDispatchJobDetail["results"][number]): strin
   return "Не найден";
 }
 
+function formatDispatchMode(value: "marketing_sale" | "predefined_coupon"): string {
+  return value === "predefined_coupon" ? "Готовые коды из Excel" : "По маркетинговой акции";
+}
+
+type DispatchMode = "marketing_sale" | "predefined_coupon";
+
 export default function CouponDispatchPage() {
   const { ready, authenticated, hasPageAccess, profile, allowedPages, logout } = useAuthGuard("coupon-dispatch");
   const { addToast } = useToast();
 
+  const [dispatchMode, setDispatchMode] = useState<DispatchMode>("marketing_sale");
   const [couponTitle, setCouponTitle] = useState("");
+  const [validUntil, setValidUntil] = useState(getTodayIsoDate);
   const [phonesText, setPhonesText] = useState("");
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [search, setSearch] = useState("");
@@ -48,14 +79,24 @@ export default function CouponDispatchPage() {
 
   const activeJobId = activeJob?.id;
   const activeJobStatus = activeJob?.status;
+  const validUntilInPast = Boolean(validUntil && validUntil < getTodayIsoDate());
+  const isMarketingMode = dispatchMode === "marketing_sale";
 
-  const canSubmit = useMemo(
-    () => Boolean(couponTitle.trim() && selectedSale && (phonesText.trim() || excelFile)),
-    [couponTitle, selectedSale, phonesText, excelFile],
-  );
+  const canSubmit = useMemo(() => {
+    if (!couponTitle.trim() || !validUntil || validUntilInPast) return false;
+    if (isMarketingMode) return Boolean(selectedSale && (phonesText.trim() || excelFile));
+    return Boolean(excelFile);
+  }, [couponTitle, validUntil, validUntilInPast, isMarketingMode, selectedSale, phonesText, excelFile]);
 
   // Sales search with debounce + AbortController (fixes race condition)
   useEffect(() => {
+    if (!isMarketingMode) {
+      setSales([]);
+      setSalesLoading(false);
+      setSelectedSale(null);
+      return;
+    }
+
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       const loadSales = async () => {
@@ -83,7 +124,7 @@ export default function CouponDispatchPage() {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [search, addToast]);
+  }, [isMarketingMode, search, addToast]);
 
   const fetchJobs = useCallback(() => couponDispatchApi.listJobs(20), []);
   const fetchJobDetail = useCallback((id: number) => couponDispatchApi.getJob(id), []);
@@ -128,8 +169,21 @@ export default function CouponDispatchPage() {
   };
 
   const submit = async () => {
-    if (!selectedSale) {
+    if (isMarketingMode && !selectedSale) {
       setFormError("Выберите маркетинговую акцию");
+      return;
+    }
+    if (!validUntil) {
+      setFormError("Укажите срок действия купона");
+      return;
+    }
+    if (validUntilInPast) {
+      setFormError("Срок действия не может быть в прошлом");
+      return;
+    }
+
+    if (!isMarketingMode && !excelFile) {
+      setFormError("Для режима с готовыми кодами нужен Excel файл");
       return;
     }
 
@@ -137,16 +191,22 @@ export default function CouponDispatchPage() {
     setFormError(null);
     try {
       const created = await couponDispatchApi.createJob({
+        dispatchMode,
         title: couponTitle.trim(),
-        marketingSaleId: selectedSale.id,
-        marketingSaleName: selectedSale.name,
-        phonesText: phonesText.trim(),
+        marketingSaleId: isMarketingMode ? selectedSale?.id : undefined,
+        marketingSaleName: isMarketingMode ? selectedSale?.name : undefined,
+        validUntil,
+        phonesText: isMarketingMode ? phonesText.trim() : undefined,
         excelFile,
       });
 
       addToast("success", "Рассылка создана и отправлена в обработку");
       setPhonesText("");
       setExcelFile(null);
+      setSearch("");
+      if (!isMarketingMode) {
+        setSelectedSale(null);
+      }
       if (excelInputRef.current) excelInputRef.current.value = "";
       setActiveJob(created);
       const refreshed = await couponDispatchApi.listJobs(20);
@@ -174,8 +234,36 @@ export default function CouponDispatchPage() {
         {/* Create form */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Новая рассылка купонов</h2>
+          <div className="mt-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setDispatchMode("marketing_sale");
+                setFormError(null);
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                isMarketingMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              По маркетинговой акции
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDispatchMode("predefined_coupon");
+                setFormError(null);
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                !isMarketingMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Готовые коды из Excel
+            </button>
+          </div>
           <p className="mt-1 text-sm text-slate-500">
-            1) Укажите название купона в приложении &nbsp;2) Загрузите Excel или вставьте телефоны &nbsp;3) Выберите акцию и отправьте
+            {isMarketingMode
+              ? "1) Укажите название купона и срок действия 2) Добавьте телефоны 3) Выберите акцию и отправьте"
+              : "1) Укажите название (amount) и срок действия 2) Загрузите Excel: колонка A телефон, колонка B код купона 3) Отправьте"}
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -189,8 +277,26 @@ export default function CouponDispatchPage() {
               />
             </label>
 
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Список номеров из Excel</span>
+            <CalendarField
+              label="Срок действия купона"
+              value={validUntil}
+              onChange={setValidUntil}
+              minValue={getTodayIsoDate()}
+              helperText="Дата, до которой купон будет действовать"
+              errorText={validUntilInPast ? "Срок действия не может быть в прошлом" : undefined}
+              quickOptions={[
+                { label: "+7 дней", daysFromToday: 7 },
+                { label: "+30 дней", daysFromToday: 30 },
+                { label: "+90 дней", daysFromToday: 90 },
+              ]}
+            />
+
+            <label className="md:col-span-2 block">
+              <span className="mb-1 block text-sm font-medium text-slate-700">
+                {isMarketingMode
+                  ? "Список номеров из Excel"
+                  : "Excel с телефонами и кодами купонов (A: телефон, B: код купона)"}
+              </span>
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
                 <input
                   ref={excelInputRef}
@@ -224,72 +330,75 @@ export default function CouponDispatchPage() {
               </div>
             </label>
 
-            <label className="md:col-span-2 block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">
-                Телефоны вручную (по одному в строке, можно через запятую)
-              </span>
-              <textarea
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                rows={5}
-                placeholder={"77071234567\n77075554433"}
-                value={phonesText}
-                onChange={(e) => setPhonesText(e.target.value)}
-              />
-            </label>
+            {isMarketingMode && (
+              <label className="md:col-span-2 block">
+                <span className="mb-1 block text-sm font-medium text-slate-700">
+                  Телефоны вручную (по одному в строке, можно через запятую)
+                </span>
+                <textarea
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  rows={5}
+                  placeholder={"77071234567\n77075554433"}
+                  value={phonesText}
+                  onChange={(e) => setPhonesText(e.target.value)}
+                />
+              </label>
+            )}
           </div>
 
-          {/* Sale search */}
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Поиск маркетинговой акции</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                placeholder="Введите название акции"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </label>
+          {isMarketingMode && (
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-slate-700">Поиск маркетинговой акции</span>
+                <input
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  placeholder="Введите название акции"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
 
-            <div className="mt-3 max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white">
-              {salesLoading ? (
-                <div className="space-y-1 p-2">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-8 w-full" />
-                  ))}
-                </div>
-              ) : sales.length === 0 ? (
-                <p className="p-3 text-sm text-slate-500">Акции не найдены</p>
-              ) : (
-                <ul>
-                  {sales.map((sale) => {
-                    const active = selectedSale?.id === sale.id;
-                    return (
-                      <li key={sale.id}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedSale(sale)}
-                          className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 ${
-                            active ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50"
-                          }`}
-                        >
-                          <span className="font-medium">{sale.name || `Акция #${sale.id}`}</span>
-                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                            Свободно: {sale.available_coupons}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <div className="mt-3 max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white">
+                {salesLoading ? (
+                  <div className="space-y-1 p-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                  </div>
+                ) : sales.length === 0 ? (
+                  <p className="p-3 text-sm text-slate-500">Акции не найдены</p>
+                ) : (
+                  <ul>
+                    {sales.map((sale) => {
+                      const active = selectedSale?.id === sale.id;
+                      return (
+                        <li key={sale.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSale(sale)}
+                            className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 ${
+                              active ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50"
+                            }`}
+                          >
+                            <span className="font-medium">{sale.name || `Акция #${sale.id}`}</span>
+                            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                              Свободно: {sale.available_coupons}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {selectedSale && (
+          {isMarketingMode && selectedSale && (
             <p className="mt-3 text-sm text-slate-600">
               Выбрана акция:{" "}
               <span className="font-medium">{selectedSale.name || `#${selectedSale.id}`}</span>,
-              доступно купонов: {selectedSale.available_coupons}
+              доступно купонов: {selectedSale.available_coupons}, срок действия: {formatIsoDate(validUntil)}
             </p>
           )}
 
@@ -330,8 +439,10 @@ export default function CouponDispatchPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                     <th className="px-3 py-2">Дата</th>
+                    <th className="px-3 py-2">Инициатор</th>
                     <th className="px-3 py-2">Купон</th>
                     <th className="px-3 py-2">Акция</th>
+                    <th className="px-3 py-2">Действует до</th>
                     <th className="px-3 py-2">Статус</th>
                     <th className="px-3 py-2">Успешно</th>
                     <th className="px-3 py-2">Ошибок</th>
@@ -342,12 +453,14 @@ export default function CouponDispatchPage() {
                   {jobs.map((job) => (
                     <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
+                      <td className="px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[200px] px-3 py-2.5">
                         <p className="truncate font-medium text-slate-800" title={job.title}>{job.title}</p>
                       </td>
                       <td className="max-w-[200px] px-3 py-2.5">
                         <p className="truncate text-slate-600" title={job.marketing_sale_name || ""}>{job.marketing_sale_name || "-"}</p>
                       </td>
+                      <td className="px-3 py-2.5 text-slate-600">{formatIsoDate(job.valid_until)}</td>
                       <td className="px-3 py-2.5"><StatusBadge status={job.status} /></td>
                       <td className="px-3 py-2.5 font-medium text-emerald-700">{job.coupons_assigned}</td>
                       <td className="px-3 py-2.5 font-medium text-rose-600">{job.errors_count}</td>
@@ -377,8 +490,11 @@ export default function CouponDispatchPage() {
 
             <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
               {([
+                ["Режим", formatDispatchMode(activeJob.dispatch_mode)],
+                ["Инициатор", activeJob.initiated_by_email || "-"],
                 ["Купон", activeJob.title],
                 ["Акция", activeJob.marketing_sale_name || "-"],
+                ["Действует до", formatIsoDate(activeJob.valid_until)],
                 ["Всего телефонов", String(activeJob.total_phones)],
                 ["Гостей найдено", String(activeJob.guests_found)],
                 ["Успешно отправлено", String(activeJob.coupons_assigned)],
@@ -392,10 +508,7 @@ export default function CouponDispatchPage() {
             </dl>
 
             {activeJob.error_log && (
-              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                <p className="font-semibold">Лог ошибок</p>
-                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs">{activeJob.error_log}</pre>
-              </div>
+              <ErrorLogPanel errorLog={activeJob.error_log} title="Ошибки при обработке" />
             )}
 
             <div className="mt-5">
@@ -425,7 +538,7 @@ export default function CouponDispatchPage() {
                               {row.success ? "Отправлено" : "Не отправлено"}
                             </span>
                           </td>
-                          <td className="max-w-[280px] truncate px-3 py-2 text-rose-600" title={row.error_message || ""}>{row.error_message || "-"}</td>
+                          <td className="max-w-[280px] truncate px-3 py-2 text-slate-600" title={translateErrorMessage(row.error_message)}>{translateErrorMessage(row.error_message)}</td>
                         </tr>
                       ))}
                     </tbody>

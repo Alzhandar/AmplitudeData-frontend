@@ -111,8 +111,12 @@ export const couponDispatchApi = {
 
   async createJob(payload: CreateCouponDispatchJobPayload): Promise<CouponDispatchJobDetail> {
     const formData = new FormData();
+    formData.append("dispatch_mode", payload.dispatchMode);
     formData.append("title", payload.title);
-    formData.append("marketing_sale_id", String(payload.marketingSaleId));
+    formData.append("valid_until", payload.validUntil);
+    if (payload.marketingSaleId) {
+      formData.append("marketing_sale_id", String(payload.marketingSaleId));
+    }
     if (payload.marketingSaleName) {
       formData.append("marketing_sale_name", payload.marketingSaleName);
     }
