@@ -180,64 +180,65 @@ export default function PushDispatchPage() {
       allowedPages={allowedPages}
       onLogout={logout}
     >
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Новая push-рассылка</h2>
         <p className="mt-1 text-sm text-slate-500">
           Заполните текст сообщения и выберите способ отправки: по списку номеров или по городу.
         </p>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (RU)</span>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-              placeholder="Например: Не забудьте про ваш приз"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (KZ)</span>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-              placeholder="Мысалы: Сыйлығыңызды ұмытпаңыз"
-              value={titleKz}
-              onChange={(e) => setTitleKz(e.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Текст (RU)</span>
-            <textarea
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-              rows={4}
-              placeholder="Текст уведомления на русском"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Текст (KZ)</span>
-            <textarea
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-              rows={4}
-              placeholder="Хабарлама мәтіні қазақ тілінде"
-              value={bodyKz}
-              onChange={(e) => setBodyKz(e.target.value)}
-            />
-          </label>
+        <div className="mt-5 space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (RU)</span>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                placeholder="Например: Не забудьте про ваш приз"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700">Текст (RU)</span>
+              <textarea
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                rows={4}
+                placeholder="Текст уведомления на русском"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (KZ)</span>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                placeholder="Мысалы: Сыйлығыңызды ұмытпаңыз"
+                value={titleKz}
+                onChange={(e) => setTitleKz(e.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-slate-700">Текст (KZ)</span>
+              <textarea
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                rows={4}
+                placeholder="Хабарлама мәтіні қазақ тілінде"
+                value={bodyKz}
+                onChange={(e) => setBodyKz(e.target.value)}
+              />
+            </label>
+          </div>
         </div>
 
         {/* Target selector */}
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <span className="mb-2 block text-sm font-medium text-slate-700">Кому отправлять</span>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() => setTarget("phones")}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-md px-3 py-2 text-sm font-medium transition text-center ${
                 target === "phones" ? "bg-indigo-600 text-white" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
               }`}
             >
@@ -246,7 +247,7 @@ export default function PushDispatchPage() {
             <button
               type="button"
               onClick={() => setTarget("city")}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-md px-3 py-2 text-sm font-medium transition text-center ${
                 target === "city" ? "bg-indigo-600 text-white" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
               }`}
             >

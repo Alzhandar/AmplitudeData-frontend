@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
       <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h1 className="text-2xl font-bold text-slate-900">Вход в аналитику</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Вход в аналитику</h1>
         <p className="mt-1 text-sm text-slate-500">Войдите по рабочей почте сотрудника.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

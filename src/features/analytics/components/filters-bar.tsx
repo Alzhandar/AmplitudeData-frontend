@@ -161,7 +161,7 @@ export function FiltersBar({
         </button>
 
         {calOpen && (
-          <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl select-none">
+          <div className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl select-none">
             {/* Phase hint */}
             <p className="mb-2 text-center text-xs font-medium text-blue-600">
               {picking === "start" ? "Выберите начало" : "Выберите конец"}

@@ -58,13 +58,13 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map((card) => (
-        <article key={card.key} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <article key={card.key} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
           <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-500">{card.label}</p>
             {loading ? (
               <Skeleton className="mt-2 h-9 w-20" />
             ) : (
-              <p className="mt-1 text-3xl font-extrabold text-gray-900">
+              <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-gray-900">
                 {(stats?.[card.key] ?? 0).toLocaleString("ru-RU")}
               </p>
             )}

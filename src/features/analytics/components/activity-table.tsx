@@ -84,7 +84,7 @@ export function ActivityTable({
             <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
               <th className="px-5 py-3">Пользователь</th>
               <th className="px-5 py-3">Устройство</th>
-              <th className="px-5 py-3">Платформа</th>
+              <th className="hidden sm:table-cell px-5 py-3">Платформа</th>
               <th className="px-5 py-3">Визиты</th>
               <th className="px-5 py-3">Последний вход (KZT)</th>
             </tr>
@@ -139,7 +139,7 @@ export function ActivityTable({
                   </td>
 
                   {/* Platform */}
-                  <td className="px-5 py-3 text-gray-500">{row.platform || "—"}</td>
+                  <td className="hidden sm:table-cell px-5 py-3 text-gray-500">{row.platform || "—"}</td>
 
                   {/* Visits */}
                   <td className="px-5 py-3 font-semibold text-blue-600">

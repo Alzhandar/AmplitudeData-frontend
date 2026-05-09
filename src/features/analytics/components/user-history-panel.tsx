@@ -85,7 +85,7 @@ export function UserHistoryPanel({
       />
 
       {/* Drawer */}
-      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
+      <aside className="fixed inset-0 z-50 flex flex-col bg-white shadow-2xl sm:inset-auto sm:right-0 sm:top-0 sm:h-full sm:w-full sm:max-w-sm">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div className="flex items-center gap-3">
@@ -120,48 +120,24 @@ export function UserHistoryPanel({
         {/* Timeline – today's visits */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {compactedVisitTimes.length > 0 && (
-            <div className="relative">
-              {/* Central line */}
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gray-200" />
+            <div className="relative pl-6">
+              {/* Vertical line */}
+              <div className="absolute left-2 top-0 h-full w-px bg-gray-200" />
 
-              <div className="space-y-6">
-                {compactedVisitTimes.map((time, index) => {
-                  const isRight = index % 2 === 0;
-                  return (
-                    <div key={time} className="relative flex items-center">
-                      {/* Card left or right */}
-                      {isRight ? (
-                        <>
-                          <div className="w-[calc(50%-20px)]" />
-                          {/* Dot */}
-                          <div className="z-10 mx-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 shadow-sm ring-4 ring-blue-100" />
-                          <div className="w-[calc(50%-20px)] rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatTimelineTime(time)}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-[calc(50%-20px)] rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatTimelineTime(time)}
-                            </div>
-                          </div>
-                          {/* Dot */}
-                          <div className="z-10 mx-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gray-400 shadow-sm ring-4 ring-gray-100" />
-                          <div className="w-[calc(50%-20px)]" />
-                        </>
-                      )}
+              <div className="space-y-4">
+                {compactedVisitTimes.map((time, index) => (
+                  <div key={time} className="relative flex items-start gap-3">
+                    <div className={`absolute -left-6 mt-1 z-10 h-4 w-4 rounded-full shadow-sm ring-4 ${index % 2 === 0 ? "bg-blue-600 ring-blue-100" : "bg-gray-400 ring-gray-100"}`} />
+                    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm w-full">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {formatTimelineTime(time)}
+                      </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}

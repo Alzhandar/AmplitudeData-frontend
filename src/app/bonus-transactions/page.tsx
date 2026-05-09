@@ -153,7 +153,7 @@ export default function BonusTransactionsPage() {
     >
       <div className="space-y-6">
         {/* Create form */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Новое начисление</h2>
           <p className="mt-1 text-sm text-slate-500">
             Укажите параметры бонуса и добавьте номера телефонов вручную или через Excel
@@ -272,7 +272,7 @@ export default function BonusTransactionsPage() {
         </section>
 
         {/* Job history */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">История начислений</h3>
 
           {jobsLoading ? (
@@ -295,13 +295,13 @@ export default function BonusTransactionsPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                     <th className="px-3 py-2">Дата</th>
-                    <th className="px-3 py-2">Инициатор</th>
+                    <th className="hidden sm:table-cell px-3 py-2">Инициатор</th>
                     <th className="px-3 py-2">Причина</th>
                     <th className="px-3 py-2">Сумма</th>
-                    <th className="px-3 py-2">Период</th>
+                    <th className="hidden md:table-cell px-3 py-2">Период</th>
                     <th className="px-3 py-2">Статус</th>
                     <th className="px-3 py-2">Успешно</th>
-                    <th className="px-3 py-2">Ошибок</th>
+                    <th className="hidden sm:table-cell px-3 py-2">Ошибок</th>
                     <th className="px-3 py-2" />
                   </tr>
                 </thead>
@@ -309,15 +309,15 @@ export default function BonusTransactionsPage() {
                   {jobs.map((job) => (
                     <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
-                      <td className="px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[260px] px-3 py-2.5">
                         <p className="truncate font-medium text-slate-800" title={job.description}>{job.description}</p>
                       </td>
                       <td className="px-3 py-2.5 font-semibold text-slate-900">{job.amount}</td>
-                      <td className="px-3 py-2.5 text-slate-500">{job.start_date} – {job.expiration_date}</td>
+                      <td className="hidden md:table-cell px-3 py-2.5 text-slate-500">{job.start_date} – {job.expiration_date}</td>
                       <td className="px-3 py-2.5"><StatusBadge status={job.status} /></td>
                       <td className="px-3 py-2.5 font-medium text-emerald-700">{job.cashbacks_created}</td>
-                      <td className="px-3 py-2.5 font-medium text-rose-600">{job.errors_count}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 font-medium text-rose-600">{job.errors_count}</td>
                       <td className="px-3 py-2.5">
                         <Button variant="secondary" size="sm" onClick={() => void openJob(job.id)}>
                           Открыть
@@ -333,7 +333,7 @@ export default function BonusTransactionsPage() {
 
         {/* Active job detail */}
         {activeJob && (
-          <section ref={detailsRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section ref={detailsRef} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">Начисление #{activeJob.id}</h3>
@@ -342,7 +342,7 @@ export default function BonusTransactionsPage() {
               <StatusBadge status={activeJob.status} />
             </div>
 
-            <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+            <dl className="mt-4 grid gap-2 text-sm grid-cols-2 md:grid-cols-3">
               {([
                 ["Причина", activeJob.description],
                 ["Инициатор", activeJob.initiated_by_email || "-"],
@@ -376,8 +376,8 @@ export default function BonusTransactionsPage() {
                       <tr className="border-b border-slate-200 text-left text-slate-400">
                         <th className="px-3 py-2">Телефон</th>
                         <th className="px-3 py-2">ID гостя</th>
-                        <th className="px-3 py-2">GUID документа</th>
-                        <th className="px-3 py-2">ID базы</th>
+                        <th className="hidden md:table-cell px-3 py-2">GUID документа</th>
+                        <th className="hidden md:table-cell px-3 py-2">ID базы</th>
                         <th className="px-3 py-2">Статус</th>
                         <th className="px-3 py-2">Ошибка</th>
                       </tr>
@@ -387,8 +387,8 @@ export default function BonusTransactionsPage() {
                         <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-3 py-2">{row.phone_normalized || row.phone_raw || "-"}</td>
                           <td className="px-3 py-2">{row.guest_id || "-"}</td>
-                          <td className="max-w-[220px] truncate px-3 py-2" title={row.doc_guid || ""}>{row.doc_guid || "-"}</td>
-                          <td className="max-w-[220px] truncate px-3 py-2" title={row.base_id || ""}>{row.base_id || "-"}</td>
+                          <td className="hidden md:table-cell max-w-[220px] truncate px-3 py-2" title={row.doc_guid || ""}>{row.doc_guid || "-"}</td>
+                          <td className="hidden md:table-cell max-w-[220px] truncate px-3 py-2" title={row.base_id || ""}>{row.base_id || "-"}</td>
                           <td className="px-3 py-2">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.success ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                               {row.success ? "Успех" : "Ошибка"}

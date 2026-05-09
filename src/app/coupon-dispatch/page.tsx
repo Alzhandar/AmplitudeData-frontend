@@ -232,16 +232,16 @@ export default function CouponDispatchPage() {
     >
       <div className="space-y-6">
         {/* Create form */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Новая рассылка купонов</h2>
-          <div className="mt-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <div className="mt-4 flex flex-wrap rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex">
             <button
               type="button"
               onClick={() => {
                 setDispatchMode("marketing_sale");
                 setFormError(null);
               }}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`flex-1 rounded-lg px-3 py-1.5 text-center text-sm font-medium transition sm:flex-none ${
                 isMarketingMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800"
               }`}
             >
@@ -253,7 +253,7 @@ export default function CouponDispatchPage() {
                 setDispatchMode("predefined_coupon");
                 setFormError(null);
               }}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`flex-1 rounded-lg px-3 py-1.5 text-center text-sm font-medium transition sm:flex-none ${
                 !isMarketingMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-800"
               }`}
             >
@@ -416,7 +416,7 @@ export default function CouponDispatchPage() {
         </section>
 
         {/* Job history */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">История рассылок</h3>
 
           {jobsLoading ? (
@@ -439,13 +439,13 @@ export default function CouponDispatchPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                     <th className="px-3 py-2">Дата</th>
-                    <th className="px-3 py-2">Инициатор</th>
+                    <th className="hidden md:table-cell px-3 py-2">Инициатор</th>
                     <th className="px-3 py-2">Купон</th>
-                    <th className="px-3 py-2">Акция</th>
-                    <th className="px-3 py-2">Действует до</th>
+                    <th className="hidden lg:table-cell px-3 py-2">Акция</th>
+                    <th className="hidden md:table-cell px-3 py-2">Действует до</th>
                     <th className="px-3 py-2">Статус</th>
                     <th className="px-3 py-2">Успешно</th>
-                    <th className="px-3 py-2">Ошибок</th>
+                    <th className="hidden sm:table-cell px-3 py-2">Ошибок</th>
                     <th className="px-3 py-2" />
                   </tr>
                 </thead>
@@ -453,17 +453,17 @@ export default function CouponDispatchPage() {
                   {jobs.map((job) => (
                     <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
-                      <td className="px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
+                      <td className="hidden md:table-cell px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[200px] px-3 py-2.5">
                         <p className="truncate font-medium text-slate-800" title={job.title}>{job.title}</p>
                       </td>
-                      <td className="max-w-[200px] px-3 py-2.5">
+                      <td className="hidden lg:table-cell max-w-[200px] px-3 py-2.5">
                         <p className="truncate text-slate-600" title={job.marketing_sale_name || ""}>{job.marketing_sale_name || "-"}</p>
                       </td>
-                      <td className="px-3 py-2.5 text-slate-600">{formatIsoDate(job.valid_until)}</td>
+                      <td className="hidden md:table-cell px-3 py-2.5 text-slate-600">{formatIsoDate(job.valid_until)}</td>
                       <td className="px-3 py-2.5"><StatusBadge status={job.status} /></td>
                       <td className="px-3 py-2.5 font-medium text-emerald-700">{job.coupons_assigned}</td>
-                      <td className="px-3 py-2.5 font-medium text-rose-600">{job.errors_count}</td>
+                      <td className="hidden sm:table-cell px-3 py-2.5 font-medium text-rose-600">{job.errors_count}</td>
                       <td className="px-3 py-2.5">
                         <Button variant="secondary" size="sm" onClick={() => void openJob(job.id)}>
                           Открыть
@@ -479,7 +479,7 @@ export default function CouponDispatchPage() {
 
         {/* Active job detail */}
         {activeJob && (
-          <section ref={detailsRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section ref={detailsRef} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">Рассылка #{activeJob.id}</h3>
@@ -488,7 +488,7 @@ export default function CouponDispatchPage() {
               <StatusBadge status={activeJob.status} />
             </div>
 
-            <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+            <dl className="mt-4 grid gap-2 text-sm grid-cols-2 md:grid-cols-3">
               {([
                 ["Режим", formatDispatchMode(activeJob.dispatch_mode)],
                 ["Инициатор", activeJob.initiated_by_email || "-"],
@@ -521,8 +521,8 @@ export default function CouponDispatchPage() {
                     <thead className="sticky top-0 bg-slate-50">
                       <tr className="border-b border-slate-200 text-left text-slate-400">
                         <th className="px-3 py-2">Телефон</th>
-                        <th className="px-3 py-2">Имя гостя</th>
-                        <th className="px-3 py-2">Купон</th>
+                        <th className="hidden sm:table-cell px-3 py-2">Имя гостя</th>
+                        <th className="hidden sm:table-cell px-3 py-2">Купон</th>
                         <th className="px-3 py-2">Статус</th>
                         <th className="px-3 py-2">Ошибка</th>
                       </tr>
@@ -531,8 +531,8 @@ export default function CouponDispatchPage() {
                       {activeJob.results.map((row) => (
                         <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-3 py-2">{row.phone_normalized || row.phone_raw || "-"}</td>
-                          <td className="px-3 py-2">{formatGuestName(row)}</td>
-                          <td className="px-3 py-2">{row.coupon_code || "-"}</td>
+                          <td className="hidden sm:table-cell px-3 py-2">{formatGuestName(row)}</td>
+                          <td className="hidden sm:table-cell px-3 py-2">{row.coupon_code || "-"}</td>
                           <td className="px-3 py-2">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.success ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                               {row.success ? "Отправлено" : "Не отправлено"}

@@ -183,7 +183,7 @@ export function CalendarField({
       {errorText && <p className="mt-1 text-xs text-red-600">{errorText}</p>}
 
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-full min-w-[300px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl md:w-[340px]">
+        <div className="absolute left-0 z-30 mt-2 w-full min-w-[280px] max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-3 shadow-xl md:w-[340px]">
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
@@ -239,7 +239,7 @@ export function CalendarField({
                   key={option.label}
                   type="button"
                   onClick={() => applyQuickDate(option.daysFromToday)}
-                  className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                  className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
                 >
                   {option.label}
                 </button>

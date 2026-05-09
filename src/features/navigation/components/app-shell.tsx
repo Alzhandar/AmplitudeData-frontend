@@ -189,10 +189,10 @@ export function AppShell({ title, subtitle, fullName, positionName, allowedPages
                 <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
                 {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <div className="text-right">
-                  <p className="max-w-[220px] truncate text-sm font-medium text-slate-800">{fullName || "Сотрудник"}</p>
-                  <p className="max-w-[220px] truncate text-xs text-slate-500">{positionName || "Должность не указана"}</p>
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:block text-right">
+                  <p className="max-w-[200px] truncate text-sm font-medium text-slate-800">{fullName || "Сотрудник"}</p>
+                  <p className="max-w-[200px] truncate text-xs text-slate-500">{positionName || "Должность не указана"}</p>
                 </div>
                 <button
                   type="button"
@@ -205,7 +205,7 @@ export function AppShell({ title, subtitle, fullName, positionName, allowedPages
             </div>
           </header>
 
-          <main className="flex-1 px-4 pb-8 pt-6 sm:px-6 lg:px-8">{children}</main>
+          <main className="flex-1 px-4 pb-8 pt-4 sm:px-6 sm:pt-6 lg:px-8">{children}</main>
         </div>
       </div>
     </div>

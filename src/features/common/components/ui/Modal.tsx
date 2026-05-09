@@ -80,7 +80,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4"
     >
       {/* Backdrop */}
       <div
@@ -92,7 +92,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
       {/* Panel */}
       <div
         ref={dialogRef}
-        className={`relative w-full ${SIZE_CLASSES[size]} rounded-2xl border border-slate-200 bg-white shadow-2xl`}
+        className={`relative w-full ${SIZE_CLASSES[size]} max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
