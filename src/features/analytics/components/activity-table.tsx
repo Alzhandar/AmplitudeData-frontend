@@ -95,7 +95,7 @@ export function ActivityTable({
                 <tr key={i} className="border-t border-gray-100">
                   <td className="px-5 py-3"><Skeleton className="h-4 w-28" /></td>
                   <td className="px-5 py-3"><Skeleton className="h-4 w-32" /></td>
-                  <td className="px-5 py-3"><Skeleton className="h-4 w-14" /></td>
+                  <td className="hidden sm:table-cell px-5 py-3"><Skeleton className="h-4 w-14" /></td>
                   <td className="px-5 py-3"><Skeleton className="h-4 w-8" /></td>
                   <td className="px-5 py-3"><Skeleton className="h-4 w-36" /></td>
                 </tr>

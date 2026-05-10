@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { AuthUser, authApi } from "@/features/auth/api";
 import { firstAllowedPath, PortalPage } from "@/features/auth/permissions";
+import { clearAuthSession, getAuthToken } from "@/features/auth/storage";
 
 type AuthGuardState = {
   ready: boolean;
@@ -36,7 +37,7 @@ export function useAuthGuard(requiredPage?: PortalPage): AuthGuardState {
   const [profile, setProfile] = useState<AuthUser>(EMPTY_PROFILE);
 
   useEffect(() => {
-    const token = window.localStorage.getItem("auth_token");
+    const token = getAuthToken();
     if (!token) {
       router.replace("/login");
       return;
@@ -61,12 +62,16 @@ export function useAuthGuard(requiredPage?: PortalPage): AuthGuardState {
           const fallbackPath = firstAllowedPath(pages);
           if (fallbackPath) {
             router.replace(fallbackPath);
+          } else {
+            // No allowed pages at all — send back to login instead of showing a dead-end screen
+            clearAuthSession();
+            router.replace("/login");
           }
         }
       })
       .catch(() => {
         if (!mounted) return;
-        window.localStorage.removeItem("auth_token");
+        clearAuthSession();
         router.replace("/login");
         setReady(true);
       });
@@ -78,7 +83,7 @@ export function useAuthGuard(requiredPage?: PortalPage): AuthGuardState {
 
   const logout = useCallback(async () => {
     await authApi.logout();
-    window.localStorage.removeItem("auth_token");
+    clearAuthSession();
     router.replace("/login");
   }, [router]);
 

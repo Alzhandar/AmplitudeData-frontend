@@ -1,10 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { authApi } from "@/features/auth/api";
+import { saveAuthSession } from "@/features/auth/storage";
+import { AuthFormField } from "@/features/auth/components/AuthFormField";
+import { Button } from "@/features/common/components/ui/Button";
+import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,73 +22,97 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
       const result = await authApi.login({
         email: email.trim().toLowerCase(),
         password,
       });
-
-      window.localStorage.setItem("auth_token", result.token);
-      window.localStorage.setItem("auth_iin", result.iin);
+      saveAuthSession(result.token, result.iin);
       router.push("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Ошибка авторизации";
-      setError(message);
+      setError(translateErrorMessage(message));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
-      <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Вход в аналитику</h1>
-        <p className="mt-1 text-sm text-slate-500">Войдите по рабочей почте сотрудника.</p>
+    <main className="flex min-h-screen bg-slate-50">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-indigo-700 p-12 text-white">
+        <Image src="/logo-avametric-white.svg" alt="avametric" width={180} height={40} priority />
+        <div>
+          <h2 className="text-3xl font-bold leading-snug">
+            Аналитика и инструменты<br />для сотрудников
+          </h2>
+          <p className="mt-4 text-indigo-200 text-sm leading-relaxed">
+            Управляйте бонусами, купонами, уведомлениями и анализируйте активность гостей — всё в одном месте.
+          </p>
+        </div>
+        <p className="text-xs text-indigo-300">© {new Date().getFullYear()} Avatariya. Только для сотрудников.</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
-            <input
+      {/* Right panel — form */}
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
+        {/* Mobile logo */}
+        <div className="mb-8 lg:hidden">
+          <Image src="/logo-avametric.svg" alt="avametric" width={160} height={36} priority />
+        </div>
+
+        <section className="w-full max-w-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Вход</h1>
+          <p className="mt-1 text-sm text-slate-500">Войдите по рабочей почте сотрудника.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+            <AuthFormField
+              id="email"
+              label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
-              required
+              onChange={setEmail}
+              autocomplete="email"
+              disabled={loading}
+              autoFocus
+              validate={(v) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Введите корректный email" : null)}
             />
-          </label>
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Пароль</span>
-            <input
-              type="password"
+            <AuthFormField
+              id="password"
+              label="Пароль"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
-              required
+              onChange={setPassword}
+              autocomplete="current-password"
+              disabled={loading}
+              showToggle
             />
-          </label>
 
-          {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-          ) : null}
+            <div role="alert" aria-live="assertive">
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+                  <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" strokeWidth="2.5" />
+                  </svg>
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-          >
-            {loading ? "Проверка..." : "Войти"}
-          </button>
+            <Button type="submit" loading={loading} className="w-full justify-center py-2.5 text-sm">
+              Войти
+            </Button>
 
-          <p className="text-center text-sm text-slate-500">
-            Нет аккаунта? {" "}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-700">
-              Зарегистрироваться
-            </Link>
-          </p>
-        </form>
-      </section>
+            <p className="text-center text-sm text-slate-500">
+              Нет аккаунта?{" "}
+              <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
+                Зарегистрироваться
+              </Link>
+            </p>
+          </form>
+        </section>
+      </div>
     </main>
   );
 }

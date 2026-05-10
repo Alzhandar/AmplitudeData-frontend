@@ -1,5 +1,6 @@
 import { PortalPage } from "@/features/auth/permissions";
 import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
+import { getAuthToken } from "@/features/auth/storage";
 
 export type AuthUser = {
   id: number;
@@ -77,7 +78,7 @@ export const authApi = {
   },
 
   async me(): Promise<MeResponse> {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
+    const token = getAuthToken();
     const response = await request(`${API_BASE_URL}/auth/me/`, {
       method: "GET",
       headers: {
@@ -95,7 +96,7 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
+    const token = getAuthToken();
     await request(`${API_BASE_URL}/auth/logout/`, {
       method: "POST",
       headers: {
