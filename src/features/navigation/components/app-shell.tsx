@@ -29,6 +29,7 @@ function iconClass(active: boolean): string {
 
 const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   {
+    label: "Аналитика",
     items: [
       {
         page: "analytics",
@@ -41,6 +42,17 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
             alt=""
             className={`h-5 w-5 object-contain transition-all ${active ? "" : "grayscale opacity-50 group-hover:opacity-75 group-hover:grayscale-0"}`}
           />
+        ),
+      },
+      {
+        page: "guest-profile",
+        href: "/guest-profile",
+        label: "Профиль гостя",
+        icon: (active) => (
+          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="12" cy="8" r="3" />
+            <path d="M5 19c0-3.5 3.2-5 7-5s7 1.5 7 5" strokeLinecap="round" />
+          </svg>
         ),
       },
     ],

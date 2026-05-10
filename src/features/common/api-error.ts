@@ -12,6 +12,8 @@ const KNOWN_SERVER_MESSAGE_MAP = new Map<string, string>([
   ["email or iin is already registered", "Email или ИИН уже зарегистрированы."],
   ["use yyyy-mm-dd format", "Используйте формат даты ГГГГ-ММ-ДД."],
   ["must be integer", "Поле должно быть целым числом."],
+  ["guest_not_found", "Гость не найден."],
+  ["invalid_phone_format", "Неверный формат телефона."],
 ]);
 
 function normalizeMessage(value: string): string {

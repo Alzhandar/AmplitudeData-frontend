@@ -4,6 +4,7 @@ export const PORTAL_PAGE_KEYS = [
   "coupon-dispatch",
   "push-dispatch",
   "blacklist",
+  "guest-profile",
 ] as const;
 
 export type PortalPage = (typeof PORTAL_PAGE_KEYS)[number];
@@ -14,6 +15,7 @@ export const PAGE_TO_PATH: Record<PortalPage, string> = {
   "coupon-dispatch": "/coupon-dispatch",
   "push-dispatch": "/push-dispatch",
   blacklist: "/blacklist",
+  "guest-profile": "/guest-profile",
 };
 
 export function firstAllowedPath(allowedPages: PortalPage[]): string | null {
