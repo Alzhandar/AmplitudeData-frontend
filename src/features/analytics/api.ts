@@ -1,4 +1,4 @@
-import { DailyActivityItem, PresenceStats } from "./types";
+import { DailyActivityItem, MobileRegistrationsStats, PresenceStats } from "./types";
 import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
@@ -113,6 +113,22 @@ export const analyticsApi = {
     return postJson<VisitSearchByPhonesRequest, DailyActivityItem[]>(
       `${API_BASE_URL}/amplitude/visit-search-by-date-phones/`,
       payload,
+      signal,
+    );
+  },
+
+  getMobileRegistrationsStats(
+    startDate: string,
+    endDate: string,
+    signal?: AbortSignal,
+  ): Promise<MobileRegistrationsStats> {
+    const year = new Date(startDate).getFullYear();
+    return getJson<MobileRegistrationsStats>(
+      buildUrl("/amplitude/mobile-registrations-stats/", {
+        year,
+        start_date: startDate,
+        end_date: endDate,
+      }),
       signal,
     );
   },

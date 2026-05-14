@@ -25,3 +25,12 @@ export type PresenceStats = {
   visit_records_total: number;
   matched_visit_records: number;
 };
+
+export type MobileRegistrationsStats = {
+  registrations: number;
+  total_users: number;
+  date_from: string;
+  date_to: string;
+  source: string;
+  cached: boolean;
+};

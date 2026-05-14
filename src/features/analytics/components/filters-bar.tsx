@@ -41,8 +41,6 @@ type FiltersBarProps = {
   startDate: string;
   endDate: string;
   onRangeChange: (start: string, end: string) => void;
-  search: string;
-  onSearchChange: (value: string) => void;
   windowHours: 6 | 24;
   onWindowHoursChange: (value: 6 | 24) => void;
   loading: boolean;
@@ -53,8 +51,6 @@ export function FiltersBar({
   startDate,
   endDate,
   onRangeChange,
-  search,
-  onSearchChange,
   windowHours,
   onWindowHoursChange,
   loading,
@@ -266,20 +262,6 @@ export function FiltersBar({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Search */}
-      <div className="relative flex-1 min-w-[200px]">
-        <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          type="text"
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Поиск по пользователю, телефону или устройству..."
-          className="w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
       </div>
 
       {/* Window toggle */}
