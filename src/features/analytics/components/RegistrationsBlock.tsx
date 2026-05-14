@@ -1,22 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { CalendarField } from "@/features/common/components/CalendarField";
 import { Skeleton } from "@/features/common/components/ui/Skeleton";
-import { useMobileRegistrationsComparison } from "../hooks";
+import { useMobileRegistrationsStats } from "../hooks";
 
-type Preset = "7d" | "30d" | "90d";
+type Preset = "7d" | "30d" | "90d" | "ytd";
+type Mode = "preset" | "custom";
 
 const PRESETS: { value: Preset; label: string }[] = [
   { value: "7d", label: "7 дней" },
   { value: "30d", label: "30 дней" },
   { value: "90d", label: "90 дней" },
+  { value: "ytd", label: "С нач. года" },
 ];
+
+function getToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getYearStart() {
+  return `${new Date().getFullYear()}-01-01`;
+}
 
 function computeDates(preset: Preset): { startDate: string; endDate: string } {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const year = today.getFullYear();
+
+  if (preset === "ytd") {
+    return { startDate: `${year}-01-01`, endDate: todayStr };
+  }
 
   const days = preset === "7d" ? 7 : preset === "30d" ? 30 : 90;
   const start = new Date(today);
@@ -32,172 +47,248 @@ function formatShortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
 
-type DeltaBadgeProps = { delta: number; deltaPercent: number | null };
-
-function DeltaBadge({ delta, deltaPercent }: DeltaBadgeProps) {
-  const isPositive = delta > 0;
-  const isNeutral = delta === 0;
-
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-        isNeutral
-          ? "bg-gray-100 text-gray-500"
-          : isPositive
-          ? "bg-emerald-100 text-emerald-700"
-          : "bg-red-100 text-red-600",
-      ].join(" ")}
-    >
-      {isPositive ? "↑" : isNeutral ? "=" : "↓"}{" "}
-      {isPositive ? "+" : ""}
-      {delta.toLocaleString("ru-RU")}
-      {deltaPercent !== null && (
-        <span className="opacity-75">
-          ({isPositive ? "+" : ""}
-          {deltaPercent.toFixed(1)}%)
-        </span>
-      )}
-    </span>
-  );
-}
-
 export function RegistrationsBlock() {
+  const [mode, setMode] = useState<Mode>("preset");
   const [preset, setPreset] = useState<Preset>("30d");
-  const { startDate, endDate } = useMemo(() => computeDates(preset), [preset]);
-  const { current, previous, delta, deltaPercent, avgPerDay, canCompare, loading, error } =
-    useMobileRegistrationsComparison(startDate, endDate);
 
-  const periodLabel =
-    startDate === endDate
-      ? formatShortDate(startDate)
-      : `${formatShortDate(startDate)} — ${formatShortDate(endDate)}`;
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [draftStart, setDraftStart] = useState(getYearStart);
+  const [draftEnd, setDraftEnd] = useState(getToday);
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [customError, setCustomError] = useState<string | null>(null);
 
-  const prevPeriodLabel =
-    previous
-      ? `${formatShortDate(previous.date_from)} — ${formatShortDate(previous.date_to)}`
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function onDown(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+        setCustomError(null);
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [pickerOpen]);
+
+  const activeDates = useMemo(() => {
+    if (mode === "custom" && customStart && customEnd) {
+      return { startDate: customStart, endDate: customEnd };
+    }
+    return computeDates(preset);
+  }, [mode, preset, customStart, customEnd]);
+
+  const { data, loading, error } = useMobileRegistrationsStats(
+    activeDates.startDate,
+    activeDates.endDate,
+  );
+
+  const growthPercent =
+    data && data.total_users > 0
+      ? (data.registrations / data.total_users) * 100
       : null;
 
+  const daysInPeriod = useMemo(() => {
+    const ms = new Date(activeDates.endDate).getTime() - new Date(activeDates.startDate).getTime();
+    return Math.max(1, Math.round(ms / 86400000) + 1);
+  }, [activeDates.startDate, activeDates.endDate]);
+
+  const avgPerDay = data ? Math.round(data.registrations / daysInPeriod) : null;
+
+  const periodLabel =
+    activeDates.startDate === activeDates.endDate
+      ? formatShortDate(activeDates.startDate)
+      : `${formatShortDate(activeDates.startDate)} — ${formatShortDate(activeDates.endDate)}`;
+
+  function handlePresetClick(value: Preset) {
+    setPreset(value);
+    setMode("preset");
+    setPickerOpen(false);
+    setCustomError(null);
+  }
+
+  function handleApplyCustom() {
+    setCustomError(null);
+    if (!draftStart || !draftEnd) {
+      setCustomError("Выберите обе даты");
+      return;
+    }
+    if (draftStart > draftEnd) {
+      setCustomError("Начало не может быть позже конца");
+      return;
+    }
+    if (new Date(draftStart).getFullYear() !== new Date(draftEnd).getFullYear()) {
+      setCustomError("Обе даты должны быть в одном году");
+      return;
+    }
+    setCustomStart(draftStart);
+    setCustomEnd(draftEnd);
+    setMode("custom");
+    setPickerOpen(false);
+  }
+
+  function resetCustom() {
+    setMode("preset");
+    setCustomStart("");
+    setCustomEnd("");
+    setPickerOpen(false);
+    setCustomError(null);
+  }
+
+  const isCustomActive = mode === "custom";
+  const today = getToday();
+  const yearStart = getYearStart();
+
   return (
-    <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.8}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
+    <article className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-4 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-gray-800">Регистрации в приложении</h2>
-            {!loading && !error && (
-              <p className="text-xs text-gray-400">{periodLabel}</p>
-            )}
-          </div>
+          <h2 className="truncate text-sm font-semibold text-gray-700">
+            Новые регистрации в приложении
+          </h2>
         </div>
 
-        {/* Presets */}
-        <div className="flex overflow-hidden rounded-lg border border-gray-200 text-xs">
-          {PRESETS.map((p, i) => (
+        {/* Controls */}
+        <div className="relative flex shrink-0 items-center gap-1.5" ref={pickerRef}>
+          {PRESETS.map((p) => (
             <button
               key={p.value}
-              onClick={() => setPreset(p.value)}
+              onClick={() => handlePresetClick(p.value)}
               className={[
-                "px-3 py-1.5 font-medium transition-colors",
-                i > 0 ? "border-l border-gray-200" : "",
-                preset === p.value
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50",
+                "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                !isCustomActive && preset === p.value
+                  ? "border-indigo-600 bg-indigo-600 text-white"
+                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50",
               ].join(" ")}
             >
               {p.label}
             </button>
           ))}
+
+          <button
+            onClick={() => setPickerOpen((v) => !v)}
+            title="Произвольный период"
+            className={[
+              "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+              isCustomActive
+                ? "border-indigo-400 bg-indigo-50 text-indigo-700"
+                : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50",
+            ].join(" ")}
+          >
+            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {isCustomActive
+              ? `${formatShortDate(customStart)} — ${formatShortDate(customEnd)}`
+              : "Период"}
+            {isCustomActive && (
+              <span
+                role="button"
+                aria-label="Сбросить"
+                onClick={(e) => { e.stopPropagation(); resetCustom(); }}
+                className="ml-0.5 text-indigo-400 hover:text-indigo-700"
+              >
+                ×
+              </span>
+            )}
+          </button>
+
+          {pickerOpen && (
+            <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+              <p className="mb-3 text-xs font-semibold text-gray-600">Произвольный период</p>
+              <div className="space-y-3">
+                <CalendarField
+                  label="Начало"
+                  value={draftStart}
+                  onChange={(v) => { setDraftStart(v); setCustomError(null); }}
+                  minValue={yearStart}
+                  maxValue={draftEnd || today}
+                />
+                <CalendarField
+                  label="Конец"
+                  value={draftEnd}
+                  onChange={(v) => { setDraftEnd(v); setCustomError(null); }}
+                  minValue={draftStart || yearStart}
+                  maxValue={today}
+                />
+              </div>
+              {customError && (
+                <p className="mt-2 text-xs text-red-500">{customError}</p>
+              )}
+              <button
+                onClick={handleApplyCustom}
+                className="mt-3 w-full rounded-lg bg-indigo-600 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800"
+              >
+                Применить
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Body */}
-      {error ? (
-        <div className="px-5 py-5 text-sm text-red-500">{error}</div>
-      ) : (
-        <div className="grid gap-px bg-gray-100 sm:grid-cols-3">
-          {/* Metric 1: New registrations */}
-          <div className="bg-white px-5 py-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              Новых пользователей
-            </p>
-            {loading ? (
-              <>
-                <Skeleton className="mt-2 h-10 w-32" />
-                <Skeleton className="mt-3 h-5 w-40" />
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-4xl font-extrabold tracking-tight text-gray-900">
-                  {(current?.registrations ?? 0).toLocaleString("ru-RU")}
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {canCompare && delta !== null ? (
-                    <>
-                      <DeltaBadge delta={delta} deltaPercent={deltaPercent} />
-                      {prevPeriodLabel && (
-                        <span className="text-xs text-gray-400">vs {prevPeriodLabel}</span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-400">нет данных для сравнения</span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+      {/* ── Body: metrics ── */}
+      <div className="flex items-stretch divide-x divide-gray-100 px-0 py-0">
 
-          {/* Metric 2: Avg per day */}
-          <div className="bg-white px-5 py-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              В среднем в день
-            </p>
-            {loading ? (
-              <>
-                <Skeleton className="mt-2 h-10 w-24" />
-                <Skeleton className="mt-3 h-4 w-28" />
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-4xl font-extrabold tracking-tight text-gray-900">
-                  {avgPerDay !== null ? avgPerDay.toLocaleString("ru-RU") : "—"}
-                </p>
-                <p className="mt-2 text-xs text-gray-400">за выбранный период</p>
-              </>
-            )}
-          </div>
-
-          {/* Metric 3: Total */}
-          <div className="bg-white px-5 py-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              Всего в базе
-            </p>
-            {loading ? (
-              <>
-                <Skeleton className="mt-2 h-10 w-28" />
-                <Skeleton className="mt-3 h-4 w-20" />
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-4xl font-extrabold tracking-tight text-gray-700">
-                  {(current?.total_users ?? 0).toLocaleString("ru-RU")}
-                </p>
-                <p className="mt-2 text-xs text-gray-400">накопительно на конец периода</p>
-              </>
-            )}
-          </div>
+        {/* Новых за период */}
+        <div className="flex flex-col justify-center px-6 py-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Новых за период</p>
+          {loading ? (
+            <>
+              <Skeleton className="mt-1 h-10 w-28" />
+              <Skeleton className="mt-1 h-3.5 w-24" />
+            </>
+          ) : error ? (
+            <p className="mt-1 text-sm text-red-500">{error}</p>
+          ) : (
+            <>
+              <div className="mt-1 flex items-baseline gap-2.5">
+                <span className="text-4xl font-extrabold tracking-tight text-gray-900">
+                  {(data?.registrations ?? 0).toLocaleString("ru-RU")}
+                </span>
+                {growthPercent !== null && (
+                  <span className={[
+                    "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
+                    growthPercent > 0 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-gray-100 text-gray-500",
+                  ].join(" ")}>
+                    {growthPercent > 0 ? "↑" : ""}{growthPercent.toFixed(1)}% прироста
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-gray-400">{periodLabel}</p>
+            </>
+          )}
         </div>
-      )}
+
+        {/* Всего в базе */}
+        <div className="flex flex-col justify-center px-6 py-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Всего в базе</p>
+          {loading ? (
+            <>
+              <Skeleton className="mt-1 h-10 w-24" />
+              <Skeleton className="mt-1 h-3.5 w-20" />
+            </>
+          ) : !error ? (
+            <>
+              <p className="mt-1 text-4xl font-extrabold tracking-tight text-gray-700">
+                {(data?.total_users ?? 0).toLocaleString("ru-RU")}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">накопительно</p>
+            </>
+          ) : null}
+        </div>
+
+      </div>
+
     </article>
   );
 }
