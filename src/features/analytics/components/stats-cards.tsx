@@ -10,7 +10,7 @@ const CARDS = [
   {
     key: "unique_users_total" as const,
     label: "Уникальных пользователей",
-    iconBg: "bg-blue-100",
+    iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,7 @@ const CARDS = [
   {
     key: "users_with_phone" as const,
     label: "С телефоном",
-    iconBg: "bg-emerald-100",
+    iconBg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,7 +32,7 @@ const CARDS = [
   {
     key: "in_location_users" as const,
     label: "В локации",
-    iconBg: "bg-amber-100",
+    iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@ const CARDS = [
   {
     key: "not_in_location_users" as const,
     label: "Вне локации",
-    iconBg: "bg-purple-100",
+    iconBg: "bg-purple-50",
     iconColor: "text-purple-600",
     icon: (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,19 +58,21 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map((card) => (
-        <article key={card.key} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-500">{card.label}</p>
+        <article key={card.key} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+          {/* Icon — left */}
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.iconBg} ${card.iconColor}`}>
+            {card.icon}
+          </div>
+          {/* Text — right */}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-slate-500">{card.label}</p>
             {loading ? (
               <Skeleton className="mt-2 h-9 w-20" />
             ) : (
-              <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-gray-900">
-                {(stats?.[card.key] ?? 0).toLocaleString("ru-RU")}
+              <p className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+                {stats ? stats[card.key].toLocaleString("ru-RU") : "—"}
               </p>
             )}
-          </div>
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${card.iconBg} ${card.iconColor}`}>
-            {card.icon}
           </div>
         </article>
       ))}

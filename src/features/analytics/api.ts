@@ -1,7 +1,5 @@
+import { apiClient, buildApiUrl } from "@/features/common/api-client";
 import { DailyActivityItem, MobileRegistrationsStats, PresenceStats } from "./types";
-import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
 
 export type VisitSearchByPhonesRequest = {
   start_date: string;
@@ -9,127 +7,38 @@ export type VisitSearchByPhonesRequest = {
   phones: string[];
 };
 
-function buildUrl(path: string, params?: Record<string, string | number>) {
-  const query = new URLSearchParams();
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      query.set(key, String(value));
-    }
-  }
-
-  const serialized = query.toString();
-  return `${API_BASE_URL}${path}${serialized ? `?${serialized}` : ""}`;
-}
-
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === "undefined") {
-    return {};
-  }
-  const token = window.localStorage.getItem("auth_token");
-  if (!token) {
-    return {};
-  }
-  return { Authorization: `Token ${token}` };
-}
-
-async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
-      },
-      cache: "no-store",
-      signal,
-    });
-  } catch (error) {
-    throw new Error(getNetworkErrorMessage(error));
-  }
-
-  if (!response.ok) {
-    throw new Error(await parseApiErrorMessage(response));
-  }
-
-  return (await response.json()) as T;
-}
-
-async function postJson<TBody, TResponse>(
-  url: string,
-  body: TBody,
-  signal?: AbortSignal,
-): Promise<TResponse> {
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-      signal,
-    });
-  } catch (error) {
-    throw new Error(getNetworkErrorMessage(error));
-  }
-
-  if (!response.ok) {
-    throw new Error(await parseApiErrorMessage(response));
-  }
-
-  return (await response.json()) as TResponse;
-}
-
 export const analyticsApi = {
   getDailyActivity(date: string, signal?: AbortSignal): Promise<DailyActivityItem[]> {
-    return getJson<DailyActivityItem[]>(
-      buildUrl("/amplitude/today-mobile-activity/", { date }),
+    return apiClient.get<DailyActivityItem[]>(
+      "/amplitude/today-mobile-activity/",
+      { date },
       signal,
     );
   },
 
   getPresenceStats(startDate: string, endDate: string, windowHours: number, signal?: AbortSignal): Promise<PresenceStats> {
-    return getJson<PresenceStats>(
-      buildUrl("/amplitude/location-presence-stats/", {
-        start_date: startDate,
-        end_date: endDate,
-        window_hours: windowHours,
-      }),
+    return apiClient.get<PresenceStats>(
+      "/amplitude/location-presence-stats/",
+      { start_date: startDate, end_date: endDate, window_hours: windowHours },
       signal,
     );
   },
 
-  /**
-   * Поиск визитов по диапазону дат и списку телефонов.
-   * POST /api/v1/visit-search-by-date-phones/
-   */
-  visitSearchByPhones(
-    payload: VisitSearchByPhonesRequest,
-    signal?: AbortSignal,
-  ): Promise<DailyActivityItem[]> {
-    return postJson<VisitSearchByPhonesRequest, DailyActivityItem[]>(
-      `${API_BASE_URL}/amplitude/visit-search-by-date-phones/`,
+  visitSearchByPhones(payload: VisitSearchByPhonesRequest, signal?: AbortSignal): Promise<DailyActivityItem[]> {
+    return apiClient.post<VisitSearchByPhonesRequest, DailyActivityItem[]>(
+      "/amplitude/visit-search-by-date-phones/",
       payload,
       signal,
     );
   },
 
-  getMobileRegistrationsStats(
-    startDate: string,
-    endDate: string,
-    signal?: AbortSignal,
-  ): Promise<MobileRegistrationsStats> {
+  getMobileRegistrationsStats(startDate: string, endDate: string, signal?: AbortSignal): Promise<MobileRegistrationsStats> {
     const year = new Date(startDate).getFullYear();
-    return getJson<MobileRegistrationsStats>(
-      buildUrl("/amplitude/mobile-registrations-stats/", {
-        year,
-        start_date: startDate,
-        end_date: endDate,
-      }),
+    return apiClient.get<MobileRegistrationsStats>(
+      "/amplitude/mobile-registrations-stats/",
+      { year, start_date: startDate, end_date: endDate },
       signal,
     );
   },
+
 };

@@ -12,16 +12,21 @@ function isSelfProxyLoop(request: NextRequest, backendBaseUrl: string): boolean 
   }
 }
 
+/** Reads token from httpOnly cookie; falls back to Authorization header for backward compat. */
+function getAuthorizationForBackend(request: NextRequest): string {
+  const tokenFromCookie = request.cookies.get("auth_token")?.value;
+  if (tokenFromCookie) return `Token ${tokenFromCookie}`;
+  return request.headers.get("authorization") || "";
+}
+
 export async function proxyGet(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
   const search = request.nextUrl.search || "";
-  const authorization = request.headers.get("authorization") || "";
+  const authorization = getAuthorizationForBackend(request);
 
   if (isSelfProxyLoop(request, backendBaseUrl)) {
     return NextResponse.json(
-      {
-        detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop.",
-      },
+      { detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop." },
       { status: 500 },
     );
   }
@@ -39,9 +44,7 @@ export async function proxyGet(request: NextRequest, backendPath: string) {
     const body = await response.text();
     return new NextResponse(body, {
       status: response.status,
-      headers: {
-        "Content-Type": response.headers.get("Content-Type") || "application/json",
-      },
+      headers: { "Content-Type": response.headers.get("Content-Type") || "application/json" },
     });
   } catch (error) {
     console.error("[api-proxy][GET] upstream request failed", {
@@ -50,24 +53,17 @@ export async function proxyGet(request: NextRequest, backendPath: string) {
       search,
       error: error instanceof Error ? error.message : String(error),
     });
-    return NextResponse.json(
-      {
-        detail: "Backend API unavailable",
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({ detail: "Backend API unavailable" }, { status: 502 });
   }
 }
 
 export async function proxyPost(request: NextRequest, backendPath: string) {
   const backendBaseUrl = getBackendBaseUrl();
-  const authorization = request.headers.get("authorization") || "";
+  const authorization = getAuthorizationForBackend(request);
 
   if (isSelfProxyLoop(request, backendBaseUrl)) {
     return NextResponse.json(
-      {
-        detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop.",
-      },
+      { detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop." },
       { status: 500 },
     );
   }
@@ -87,9 +83,7 @@ export async function proxyPost(request: NextRequest, backendPath: string) {
     const responseBody = await response.text();
     return new NextResponse(responseBody, {
       status: response.status,
-      headers: {
-        "Content-Type": response.headers.get("Content-Type") || "application/json",
-      },
+      headers: { "Content-Type": response.headers.get("Content-Type") || "application/json" },
     });
   } catch (error) {
     console.error("[api-proxy][POST] upstream request failed", {
@@ -97,11 +91,8 @@ export async function proxyPost(request: NextRequest, backendPath: string) {
       backendPath,
       error: error instanceof Error ? error.message : String(error),
     });
-    return NextResponse.json(
-      {
-        detail: "Backend API unavailable",
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({ detail: "Backend API unavailable" }, { status: 502 });
   }
 }
+
+export { getAuthorizationForBackend };

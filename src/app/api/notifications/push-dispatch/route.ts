@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { proxyPost } from "../../amplitude/_lib/proxy";
+import { proxyPost, getAuthorizationForBackend } from "../../amplitude/_lib/proxy";
 
 function getBackendBaseUrl(): string {
   return (process.env.BACKEND_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -21,13 +21,11 @@ export async function POST(request: NextRequest) {
   }
 
   const backendBaseUrl = getBackendBaseUrl();
-  const authorization = request.headers.get("authorization") || "";
+  const authorization = getAuthorizationForBackend(request);
 
   if (isSelfProxyLoop(request, backendBaseUrl)) {
     return NextResponse.json(
-      {
-        detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop.",
-      },
+      { detail: "BACKEND_BASE_URL points to frontend origin and causes an infinite proxy loop." },
       { status: 500 },
     );
   }
@@ -36,9 +34,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const response = await fetch(`${backendBaseUrl}/api/notifications/push-dispatch/`, {
       method: "POST",
-      headers: {
-        ...(authorization ? { Authorization: authorization } : {}),
-      },
+      headers: { ...(authorization ? { Authorization: authorization } : {}) },
       body: formData,
       cache: "no-store",
     });
@@ -46,21 +42,13 @@ export async function POST(request: NextRequest) {
     const body = await response.text();
     return new NextResponse(body, {
       status: response.status,
-      headers: {
-        "Content-Type": response.headers.get("Content-Type") || "application/json",
-      },
+      headers: { "Content-Type": response.headers.get("Content-Type") || "application/json" },
     });
   } catch (error) {
     console.error("[api-proxy][POST multipart] push-dispatch upstream request failed", {
       backendBaseUrl,
-      backendPath: "/api/notifications/push-dispatch/",
       error: error instanceof Error ? error.message : String(error),
     });
-    return NextResponse.json(
-      {
-        detail: "Backend API unavailable",
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({ detail: "Backend API unavailable" }, { status: 502 });
   }
 }

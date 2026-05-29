@@ -1,74 +1,16 @@
+import { apiClient } from "@/features/common/api-client";
 import { NotificationCityOption, SendPushPayload, SendPushResponse } from "@/features/push-dispatch/types";
-import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
-const REQUEST_TIMEOUT_MS = 45000;
-
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  const token = window.localStorage.getItem("auth_token");
-  if (!token) {
-    return {};
-  }
-
-  return { Authorization: `Token ${token}` };
-}
-
-async function parseErrorMessage(response: Response): Promise<string> {
-  return parseApiErrorMessage(response);
-}
-
-function buildUrl(path: string, params?: Record<string, string | number>) {
-  const query = new URLSearchParams();
-
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      query.set(key, String(value));
-    }
-  }
-
-  const queryString = query.toString();
-  return `${API_BASE_URL}${path}${queryString ? `?${queryString}` : ""}`;
-}
-
-async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    return await fetch(url, {
-      ...init,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    throw new Error(getNetworkErrorMessage(error));
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
 
 export const pushDispatchApi = {
-  async listCities(search = ""): Promise<NotificationCityOption[]> {
-    const response = await fetchWithTimeout(buildUrl("/notifications/cities/", search ? { search } : undefined), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
-    }
-
-    return (await response.json()) as NotificationCityOption[];
+  listCities(search = "", signal?: AbortSignal): Promise<NotificationCityOption[]> {
+    return apiClient.get<NotificationCityOption[]>(
+      "/notifications/cities/",
+      search ? { search } : undefined,
+      signal,
+    );
   },
 
-  async sendPush(payload: SendPushPayload): Promise<SendPushResponse> {
+  sendPush(payload: SendPushPayload): Promise<SendPushResponse> {
     if (payload.target === "phones" && payload.excelFile) {
       const formData = new FormData();
       formData.append("target", payload.target);
@@ -78,50 +20,21 @@ export const pushDispatchApi = {
       formData.append("body_kz", payload.bodyKz || "");
       formData.append("notification_type", payload.notificationType || "default");
       formData.append("excel_file", payload.excelFile);
-
       for (const phone of payload.phoneNumbers || []) {
         formData.append("phone_numbers", phone);
       }
-
-      const multipartResponse = await fetchWithTimeout(`${API_BASE_URL}/notifications/push-dispatch/`, {
-        method: "POST",
-        headers: {
-          ...getAuthHeader(),
-        },
-        body: formData,
-        cache: "no-store",
-      });
-
-      if (!multipartResponse.ok) {
-        throw new Error(await parseErrorMessage(multipartResponse));
-      }
-
-      return (await multipartResponse.json()) as SendPushResponse;
+      return apiClient.postForm<SendPushResponse>("/notifications/push-dispatch/", formData);
     }
 
-    const response = await fetchWithTimeout(`${API_BASE_URL}/notifications/push-dispatch/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
-      },
-      body: JSON.stringify({
-        target: payload.target,
-        phone_numbers: payload.phoneNumbers || [],
-        city_id: payload.cityId,
-        title: payload.title,
-        body: payload.body,
-        title_kz: payload.titleKz || "",
-        body_kz: payload.bodyKz || "",
-        notification_type: payload.notificationType || "default",
-      }),
-      cache: "no-store",
+    return apiClient.post<object, SendPushResponse>("/notifications/push-dispatch/", {
+      target: payload.target,
+      phone_numbers: payload.phoneNumbers || [],
+      city_id: payload.cityId,
+      title: payload.title,
+      body: payload.body,
+      title_kz: payload.titleKz || "",
+      body_kz: payload.bodyKz || "",
+      notification_type: payload.notificationType || "default",
     });
-
-    if (!response.ok) {
-      throw new Error(await parseErrorMessage(response));
-    }
-
-    return (await response.json()) as SendPushResponse;
   },
 };

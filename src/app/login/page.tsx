@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,8 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError(null);
     setLoading(true);
     try {
@@ -27,7 +26,7 @@ export default function LoginPage() {
         email: email.trim().toLowerCase(),
         password,
       });
-      saveAuthSession(result.token, result.iin);
+      saveAuthSession(result.iin);
       router.push("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Ошибка авторизации";
@@ -64,7 +63,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-slate-900">Вход</h1>
           <p className="mt-1 text-sm text-slate-500">Войдите по рабочей почте сотрудника.</p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+          <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }} className="mt-8 space-y-5" noValidate>
             <AuthFormField
               id="email"
               label="Email"

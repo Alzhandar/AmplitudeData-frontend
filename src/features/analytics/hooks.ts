@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { analyticsApi } from "./api";
 import { DailyActivityItem, MobileRegistrationsStats, PresenceStats } from "./types";
 
-type DashboardState = {
+export type DashboardState = {
   activity: DailyActivityItem[];
   stats: PresenceStats | null;
   loading: boolean;

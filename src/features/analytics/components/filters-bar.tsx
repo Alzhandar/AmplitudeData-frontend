@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getTodayIsoDate } from "@/features/common/utils/date";
 
 const RU_MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -57,16 +58,14 @@ export function FiltersBar({
   lastUpdatedAt,
 }: FiltersBarProps) {
   const [calOpen, setCalOpen] = useState(false);
-  // 'start' = picking start date, 'end' = picking end date
   const [picking, setPicking] = useState<"start" | "end">("start");
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const calRef = useRef<HTMLDivElement>(null);
 
-  const anchorDate = startDate || new Date().toISOString().slice(0, 10);
+  const anchorDate = startDate || getTodayIsoDate();
   const [viewYear, setViewYear] = useState(() => new Date(anchorDate + "T00:00:00").getFullYear());
   const [viewMonth, setViewMonth] = useState(() => new Date(anchorDate + "T00:00:00").getMonth());
 
-  // When calendar opens, reset picking phase and view to startDate
   useEffect(() => {
     if (calOpen) {
       setPicking("start");
@@ -79,7 +78,6 @@ export function FiltersBar({
     }
   }, [calOpen, startDate]);
 
-  // close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (calRef.current && !calRef.current.contains(e.target as Node)) {
@@ -103,9 +101,8 @@ export function FiltersBar({
   }, [lastUpdatedAt]);
 
   const cells = buildCalendarDays(viewYear, viewMonth);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayIsoDate();
 
-  // Effective range including hover preview
   const effectiveEnd = picking === "end" && hoverDate ? hoverDate : endDate;
   const rangeStart = startDate <= effectiveEnd ? startDate : effectiveEnd;
   const rangeEnd = startDate <= effectiveEnd ? effectiveEnd : startDate;
@@ -148,32 +145,32 @@ export function FiltersBar({
         <button
           type="button"
           onClick={() => setCalOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 shadow-sm hover:border-blue-400 transition"
+          className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 shadow-sm transition hover:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
-          <svg className="h-4 w-4 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 shrink-0 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span className="text-sm font-medium text-gray-800 whitespace-nowrap">{rangeLabel}</span>
+          <span className="whitespace-nowrap text-sm font-medium text-slate-800">{rangeLabel}</span>
         </button>
 
         {calOpen && (
-          <div className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-200 bg-white p-4 shadow-xl select-none">
+          <div className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] select-none rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
             {/* Phase hint */}
-            <p className="mb-2 text-center text-xs font-medium text-blue-600">
+            <p className="mb-2 text-center text-xs font-medium text-indigo-600">
               {picking === "start" ? "Выберите начало" : "Выберите конец"}
             </p>
 
             {/* Month nav */}
             <div className="mb-3 flex items-center justify-between">
-              <button type="button" onClick={prevMonth} className="rounded-lg p-1.5 hover:bg-gray-100 text-gray-500 transition">
+              <button type="button" onClick={prevMonth} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <span className="text-sm font-semibold text-gray-800">
+              <span className="text-sm font-semibold text-slate-800">
                 {RU_MONTHS[viewMonth]} {viewYear}
               </span>
-              <button type="button" onClick={nextMonth} className="rounded-lg p-1.5 hover:bg-gray-100 text-gray-500 transition">
+              <button type="button" onClick={nextMonth} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -183,7 +180,7 @@ export function FiltersBar({
             {/* Weekday headers */}
             <div className="mb-1 grid grid-cols-7 text-center">
               {RU_DAYS_SHORT.map((d) => (
-                <span key={d} className="text-[10px] font-semibold uppercase text-gray-400">{d}</span>
+                <span key={d} className="text-[10px] font-semibold uppercase text-slate-400">{d}</span>
               ))}
             </div>
 
@@ -208,15 +205,15 @@ export function FiltersBar({
                     className={[
                       "relative flex h-8 w-full items-center justify-center text-sm transition",
                       isEndpoint ? "z-10" : "",
-                      isInRange ? "bg-blue-50 text-blue-800" : "",
+                      isInRange ? "bg-indigo-50 text-indigo-800" : "",
                     ].join(" ")}
                   >
                     <span
                       className={[
                         "flex h-8 w-8 items-center justify-center rounded-full",
-                        isEndpoint ? "bg-blue-600 font-bold text-white" : "",
-                        !isEndpoint && isToday ? "border border-blue-400 font-semibold text-blue-600" : "",
-                        !isEndpoint && !isToday && !isInRange ? "text-gray-700 hover:bg-gray-100" : "",
+                        isEndpoint ? "bg-indigo-600 font-bold text-white" : "",
+                        !isEndpoint && isToday ? "border border-indigo-400 font-semibold text-indigo-600" : "",
+                        !isEndpoint && !isToday && !isInRange ? "text-slate-700 hover:bg-slate-100" : "",
                       ].join(" ")}
                     >
                       {day}
@@ -227,7 +224,7 @@ export function FiltersBar({
             </div>
 
             {/* Quick presets */}
-            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-gray-100 pt-3">
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
               {[
                 { label: "Сегодня", days: 0 },
                 { label: "7 дней", days: 6 },
@@ -254,7 +251,7 @@ export function FiltersBar({
                     setCalOpen(false);
                     setPicking("start");
                   }}
-                  className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:border-blue-400 hover:text-blue-700 transition"
+                  className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-indigo-400 hover:text-indigo-700"
                 >
                   {label}
                 </button>
@@ -264,12 +261,12 @@ export function FiltersBar({
         )}
       </div>
 
-      {/* Window toggle */}
-      <div className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm">
-        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Window hours toggle */}
+      <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm">
+        <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span className="text-sm text-gray-500">Окно</span>
+        <span className="text-sm text-slate-500">Окно</span>
         {([6, 24] as const).map((hours) => {
           const selected = windowHours === hours;
           return (
@@ -278,7 +275,7 @@ export function FiltersBar({
               type="button"
               onClick={() => onWindowHoursChange(hours)}
               className={`rounded-lg px-3 py-1 text-sm font-semibold transition ${
-                selected ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                selected ? "bg-indigo-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-100"
               }`}
             >
               {hours}ч
@@ -287,12 +284,12 @@ export function FiltersBar({
         })}
       </div>
 
-      {/* Status dot */}
+      {/* Status */}
       <div className="flex items-center gap-2">
-        <span className={`h-2 w-2 rounded-full ${loading ? "bg-amber-400 animate-pulse" : "bg-emerald-500"}`} />
-        <span className="text-xs text-gray-500">{loading ? "Обновление..." : "В эфире"}</span>
+        <span className={`h-2 w-2 rounded-full ${loading ? "animate-pulse bg-amber-400" : "bg-emerald-500"}`} />
+        <span className="text-xs text-slate-500">{loading ? "Обновление..." : "В эфире"}</span>
         {!loading && lastUpdatedTime && (
-          <span className="text-xs text-gray-400">· обновлено {lastUpdatedTime}</span>
+          <span className="text-xs text-slate-400">· обновлено {lastUpdatedTime}</span>
         )}
       </div>
     </section>

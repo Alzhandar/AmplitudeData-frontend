@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getTodayIsoDate } from "@/features/common/utils/date";
 
 export type QuickDateOption = {
   label: string;
@@ -70,11 +71,6 @@ function clampIsoDate(value: string, minValue?: string, maxValue?: string): stri
   if (minValue && value < minValue) return minValue;
   if (maxValue && value > maxValue) return maxValue;
   return value;
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  return toIsoDate(now);
 }
 
 export function CalendarField({
@@ -187,18 +183,24 @@ export function CalendarField({
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
+              aria-label="Предыдущий месяц"
               onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
-              className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100"
             >
-              Назад
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             <p className="text-sm font-semibold text-slate-900">{monthTitle}</p>
             <button
               type="button"
+              aria-label="Следующий месяц"
               onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
-              className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100"
             >
-              Вперед
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
 

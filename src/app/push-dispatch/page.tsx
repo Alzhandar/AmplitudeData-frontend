@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AppShell } from "@/features/navigation/components/app-shell";
 import { useAuthGuard } from "@/features/auth/use-auth-guard";
@@ -97,32 +97,27 @@ export default function PushDispatchPage() {
     return selectedCityId !== null;
   }, [title, body, target, parsedPhones.length, excelFile, selectedCityId]);
 
-  useEffect(() => {
-    let canceled = false;
-    const loadCities = async () => {
-      setCitiesLoading(true);
-      setCitiesError(null);
-      try {
-        const data = await pushDispatchApi.listCities();
-        if (canceled) return;
-        setCities(data);
-        if (selectedCityId !== null && !data.some((c) => c.id === selectedCityId)) {
-          setSelectedCityId(null);
-        }
-      } catch (err) {
-        if (!canceled) {
-          setCitiesError(err instanceof Error ? err.message : "Не удалось загрузить список городов");
-        }
-      } finally {
-        if (!canceled) setCitiesLoading(false);
+  const loadCities = useCallback(async () => {
+    setCitiesLoading(true);
+    setCitiesError(null);
+    try {
+      const data = await pushDispatchApi.listCities();
+      setCities(data);
+      if (selectedCityId !== null && !data.some((c) => c.id === selectedCityId)) {
+        setSelectedCityId(null);
       }
-    };
-
-    void loadCities();
-    return () => { canceled = true; };
-  // Only run once on mount — selectedCityId intentionally excluded
+    } catch (err) {
+      setCitiesError(err instanceof Error ? err.message : "Не удалось загрузить список городов");
+    } finally {
+      setCitiesLoading(false);
+    }
+  // selectedCityId intentionally excluded — only validate against loaded data, not re-trigger load
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void loadCities();
+  }, [loadCities]);
 
   useEffect(() => {
     if (target !== "city" && showConfirmModal) setShowConfirmModal(false);
@@ -182,6 +177,7 @@ export default function PushDispatchPage() {
     >
       <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Новая push-рассылка</h2>
+        <form onSubmit={(e) => { e.preventDefault(); handleSendClick(); }} className="contents">
         <p className="mt-1 text-sm text-slate-500">
           Заполните текст сообщения и выберите способ отправки: по списку номеров или по городу.
         </p>
@@ -315,9 +311,16 @@ export default function PushDispatchPage() {
           ) : (
               <div className="mt-4">
               {citiesError ? (
-                <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-                  {citiesError}
-                </p>
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-sm text-red-700" role="alert">{citiesError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadCities()}
+                    className="shrink-0 rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                  >
+                    Повторить
+                  </button>
+                </div>
               ) : null}
               <div className="block">
                 <span className="mb-1.5 block text-sm font-medium text-slate-700">Выберите город</span>
@@ -339,10 +342,11 @@ export default function PushDispatchPage() {
         )}
 
         <div className="mt-5">
-          <Button disabled={!canSubmit} loading={sending} onClick={handleSendClick}>
+          <Button type="submit" disabled={!canSubmit} loading={sending}>
             Отправить push
           </Button>
         </div>
+        </form>
       </section>
 
       {/* Confirm city modal */}

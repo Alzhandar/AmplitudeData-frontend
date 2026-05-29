@@ -136,10 +136,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      {/* Portal-like fixed container */}
+      {/* Portal-like fixed container — bottom-20 on mobile clears the bottom nav bar */}
       <div
         aria-label="Уведомления"
-        className="fixed bottom-5 right-5 z-[9999] flex flex-col items-end gap-2"
+        className="fixed bottom-20 right-4 z-[9999] flex flex-col items-end gap-2 lg:bottom-5 lg:right-5"
       >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />

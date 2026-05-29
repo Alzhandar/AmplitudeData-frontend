@@ -5,29 +5,21 @@ import { useCallback, useEffect, useRef } from "react";
 type JobStatus = "pending" | "processing" | "completed" | "failed";
 
 type UseJobPollingOptions<TJob extends { id: number; status: JobStatus }, TDetail extends { id: number; status: JobStatus }> = {
-  /** Whether initial load + polling should be active */
   enabled: boolean;
   activeJobId: number | undefined;
   activeJobStatus: JobStatus | undefined;
-  /** Fetch the short job list */
   fetchJobs: () => Promise<TJob[]>;
-  /** Fetch a single job detail */
   fetchJobDetail: (id: number) => Promise<TDetail>;
   onJobsLoaded: (jobs: TJob[]) => void;
   onJobDetailLoaded: (detail: TDetail) => void;
-  /** Called with an error message when the initial job list load fails */
   onInitialLoadError: (message: string) => void;
-  /** Interval in ms. Default: 8000 */
+  /** Called when background polling fails repeatedly. */
+  onPollingError?: (message: string) => void;
   intervalMs?: number;
 };
 
-/**
- * Shared polling hook used by BonusTransactions and CouponDispatch pages.
- * - Loads jobs once on mount (with loader)
- * - Polls every `intervalMs` ms when `enabled`
- * - Refreshes active job detail if it's in a transient state
- * - Stops polling when active job reaches a terminal state
- */
+const MAX_CONSECUTIVE_ERRORS = 3;
+
 export function useJobPolling<
   TJob extends { id: number; status: JobStatus },
   TDetail extends { id: number; status: JobStatus },
@@ -40,38 +32,54 @@ export function useJobPolling<
   onJobsLoaded,
   onJobDetailLoaded,
   onInitialLoadError,
+  onPollingError,
   intervalMs = 8000,
 }: UseJobPollingOptions<TJob, TDetail>) {
   const stoppedRef = useRef(false);
+  const consecutiveErrorsRef = useRef(0);
+  const pollingErrorNotifiedRef = useRef(false);
 
   const pollOnce = useCallback(async () => {
     if (stoppedRef.current) return;
 
-    // Always refresh list silently
     try {
       const jobs = await fetchJobs();
-      if (!stoppedRef.current) onJobsLoaded(jobs);
-    } catch {
-      // silent during background polling
+      if (!stoppedRef.current) {
+        onJobsLoaded(jobs);
+        consecutiveErrorsRef.current = 0;
+        pollingErrorNotifiedRef.current = false;
+      }
+    } catch (err) {
+      consecutiveErrorsRef.current += 1;
+      if (
+        consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS &&
+        !pollingErrorNotifiedRef.current &&
+        onPollingError
+      ) {
+        pollingErrorNotifiedRef.current = true;
+        onPollingError(
+          err instanceof Error ? err.message : "Не удаётся обновить список задач. Проверьте соединение.",
+        );
+      }
     }
 
-    // Refresh active job detail if still in progress
     if (!activeJobId || (activeJobStatus !== "pending" && activeJobStatus !== "processing")) return;
 
     try {
       const detail = await fetchJobDetail(activeJobId);
       if (!stoppedRef.current) onJobDetailLoaded(detail);
     } catch {
-      // silent during background polling
+      // Detail refresh failure is non-critical; list error tracking handles notifications
     }
-  }, [activeJobId, activeJobStatus, fetchJobDetail, fetchJobs, onJobDetailLoaded, onJobsLoaded]);
+  }, [activeJobId, activeJobStatus, fetchJobDetail, fetchJobs, onJobDetailLoaded, onJobsLoaded, onPollingError]);
 
   useEffect(() => {
     if (!enabled) return;
 
     stoppedRef.current = false;
+    consecutiveErrorsRef.current = 0;
+    pollingErrorNotifiedRef.current = false;
 
-    // Initial load (we want errors visible here)
     const initialLoad = async () => {
       try {
         const jobs = await fetchJobs();

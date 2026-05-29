@@ -1,6 +1,5 @@
 import { PortalPage } from "@/features/auth/permissions";
 import { getNetworkErrorMessage, parseApiErrorMessage } from "@/features/common/api-error";
-import { getAuthToken } from "@/features/auth/storage";
 
 export type AuthUser = {
   id: number;
@@ -13,7 +12,6 @@ export type AuthUser = {
 };
 
 export type LoginResponse = {
-  token: string;
   user: AuthUser;
   iin: string;
   allowed_pages: PortalPage[];
@@ -78,13 +76,10 @@ export const authApi = {
   },
 
   async me(): Promise<MeResponse> {
-    const token = getAuthToken();
+    // No Authorization header — the httpOnly cookie is sent automatically by the browser
     const response = await request(`${API_BASE_URL}/auth/me/`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Token ${token}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
       cache: "no-store",
     });
 
@@ -96,13 +91,10 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    const token = getAuthToken();
+    // Cookie is cleared server-side by the logout route
     await request(`${API_BASE_URL}/auth/logout/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Token ${token}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
       cache: "no-store",
     });
   },

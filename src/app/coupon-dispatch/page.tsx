@@ -16,32 +16,7 @@ import { useJobPolling } from "@/features/common/hooks/useJobPolling";
 import { ErrorLogPanel } from "@/features/common/components/ui/ErrorLogPanel";
 import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatIsoDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const [yearText, monthText, dayText] = value.split("-");
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return value;
-  const date = new Date(year, month - 1, day);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(date);
-}
+import { formatDateTime, formatIsoDate, getTodayIsoDate } from "@/features/common/utils/date";
 
 function formatGuestName(row: CouponDispatchJobDetail["results"][number]): string {
   const maybeName = "guest_name" in row && typeof row.guest_name === "string" ? row.guest_name.trim() : "";
@@ -143,6 +118,10 @@ export default function CouponDispatchPage() {
     addToast("error", message);
   }, [addToast]);
 
+  const onPollingError = useCallback((message: string) => {
+    addToast("error", `Ошибка обновления: ${message}`);
+  }, [addToast]);
+
   useJobPolling({
     enabled: authenticated,
     activeJobId,
@@ -152,6 +131,7 @@ export default function CouponDispatchPage() {
     onJobsLoaded,
     onJobDetailLoaded,
     onInitialLoadError,
+    onPollingError,
   });
 
   useEffect(() => {
@@ -234,6 +214,8 @@ export default function CouponDispatchPage() {
         {/* Create form */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Новая рассылка купонов</h2>
+          {/* Invisible form wrapper enables Enter-to-submit and screen-reader form semantics */}
+          <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="contents">
           <div className="mt-4 flex flex-wrap rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex">
             <button
               type="button"
@@ -263,7 +245,7 @@ export default function CouponDispatchPage() {
           <p className="mt-1 text-sm text-slate-500">
             {isMarketingMode
               ? "1) Укажите название купона и срок действия 2) Добавьте телефоны 3) Выберите акцию и отправьте"
-              : "1) Укажите название (amount) и срок действия 2) Загрузите Excel: колонка A телефон, колонка B код купона 3) Отправьте"}
+              : "1) Укажите название купона и срок действия 2) Загрузите Excel: колонка A телефон, колонка B код купона 3) Отправьте"}
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -409,10 +391,11 @@ export default function CouponDispatchPage() {
           )}
 
           <div className="mt-5">
-            <Button disabled={!canSubmit} loading={submitting} onClick={() => void submit()}>
+            <Button type="submit" disabled={!canSubmit} loading={submitting}>
               Отправить купоны
             </Button>
           </div>
+          </form>
         </section>
 
         {/* Job history */}

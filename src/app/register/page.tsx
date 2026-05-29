@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,8 +30,7 @@ export default function RegisterPage() {
 
   const strength = passwordStrength(password);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError(null);
     setLoading(true);
     try {
@@ -40,7 +39,7 @@ export default function RegisterPage() {
         password,
         iin: iin.trim(),
       });
-      saveAuthSession(result.token, result.iin);
+      saveAuthSession(result.iin);
       router.push("/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Ошибка регистрации";
@@ -77,7 +76,7 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold text-slate-900">Регистрация</h1>
           <p className="mt-1 text-sm text-slate-500">Укажите Email, пароль и ИИН сотрудника.</p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+          <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }} className="mt-8 space-y-5" noValidate>
             <AuthFormField
               id="email"
               label="Email"
@@ -101,7 +100,6 @@ export default function RegisterPage() {
                 showToggle
                 validate={(v) => (v && v.length < 8 ? "Минимум 8 символов" : null)}
               />
-              {/* Password strength bar */}
               {password.length > 0 && (
                 <div className="mt-2 flex items-center gap-2">
                   <div className="flex flex-1 gap-1">

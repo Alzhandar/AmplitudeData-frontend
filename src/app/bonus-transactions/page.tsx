@@ -16,20 +16,7 @@ import { useJobPolling } from "@/features/common/hooks/useJobPolling";
 import { ErrorLogPanel } from "@/features/common/components/ui/ErrorLogPanel";
 import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
-
-function getTodayIsoDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+import { formatDateTime, getTodayIsoDate } from "@/features/common/utils/date";
 
 export default function BonusTransactionsPage() {
   const { ready, authenticated, hasPageAccess, profile, allowedPages, logout } = useAuthGuard("bonus-transactions");
@@ -77,6 +64,10 @@ export default function BonusTransactionsPage() {
     addToast("error", message);
   }, [addToast]);
 
+  const onPollingError = useCallback((message: string) => {
+    addToast("error", `Ошибка обновления: ${message}`);
+  }, [addToast]);
+
   useJobPolling({
     enabled: authenticated,
     activeJobId,
@@ -86,6 +77,7 @@ export default function BonusTransactionsPage() {
     onJobsLoaded,
     onJobDetailLoaded,
     onInitialLoadError,
+    onPollingError,
   });
 
   useEffect(() => {
@@ -158,6 +150,7 @@ export default function BonusTransactionsPage() {
           <p className="mt-1 text-sm text-slate-500">
             Укажите параметры бонуса и добавьте номера телефонов вручную или через Excel
           </p>
+          <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="contents">
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label className="block md:col-span-2">
@@ -265,10 +258,11 @@ export default function BonusTransactionsPage() {
           )}
 
           <div className="mt-5">
-            <Button disabled={!canSubmit} loading={submitting} onClick={() => void submit()}>
+            <Button type="submit" disabled={!canSubmit} loading={submitting}>
               Начислить бонусы
             </Button>
           </div>
+          </form>
         </section>
 
         {/* Job history */}

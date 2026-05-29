@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarField } from "@/features/common/components/CalendarField";
 import { Skeleton } from "@/features/common/components/ui/Skeleton";
+import { getTodayIsoDate } from "@/features/common/utils/date";
 import { useMobileRegistrationsStats } from "../hooks";
 
 type Preset = "7d" | "30d" | "90d" | "ytd";
@@ -15,10 +16,6 @@ const PRESETS: { value: Preset; label: string }[] = [
   { value: "90d", label: "90 дней" },
   { value: "ytd", label: "С нач. года" },
 ];
-
-function getToday() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function getYearStart() {
   return `${new Date().getFullYear()}-01-01`;
@@ -53,7 +50,7 @@ export function RegistrationsBlock() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draftStart, setDraftStart] = useState(getYearStart);
-  const [draftEnd, setDraftEnd] = useState(getToday);
+  const [draftEnd, setDraftEnd] = useState(getTodayIsoDate);
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [customError, setCustomError] = useState<string | null>(null);
@@ -110,14 +107,8 @@ export function RegistrationsBlock() {
 
   function handleApplyCustom() {
     setCustomError(null);
-    if (!draftStart || !draftEnd) {
-      setCustomError("Выберите обе даты");
-      return;
-    }
-    if (draftStart > draftEnd) {
-      setCustomError("Начало не может быть позже конца");
-      return;
-    }
+    if (!draftStart || !draftEnd) { setCustomError("Выберите обе даты"); return; }
+    if (draftStart > draftEnd) { setCustomError("Начало не может быть позже конца"); return; }
     if (new Date(draftStart).getFullYear() !== new Date(draftEnd).getFullYear()) {
       setCustomError("Обе даты должны быть в одном году");
       return;
@@ -137,37 +128,36 @@ export function RegistrationsBlock() {
   }
 
   const isCustomActive = mode === "custom";
-  const today = getToday();
+  const today = getTodayIsoDate();
   const yearStart = getYearStart();
 
   return (
-    <article className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <article className="rounded-2xl border border-slate-200 bg-white shadow-sm">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                 d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
-          <h2 className="truncate text-sm font-semibold text-gray-700">
-            Новые регистрации в приложении
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-700">Новые регистрации в приложении</h2>
         </div>
 
         {/* Controls */}
-        <div className="relative flex shrink-0 items-center gap-1.5" ref={pickerRef}>
+        <div className="relative flex flex-wrap items-center gap-1.5" ref={pickerRef}>
           {PRESETS.map((p) => (
             <button
               key={p.value}
+              type="button"
               onClick={() => handlePresetClick(p.value)}
               className={[
                 "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
                 !isCustomActive && preset === p.value
                   ? "border-indigo-600 bg-indigo-600 text-white"
-                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50",
+                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
               ].join(" ")}
             >
               {p.label}
@@ -175,13 +165,14 @@ export function RegistrationsBlock() {
           ))}
 
           <button
+            type="button"
             onClick={() => setPickerOpen((v) => !v)}
             title="Произвольный период"
             className={[
               "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
               isCustomActive
                 ? "border-indigo-400 bg-indigo-50 text-indigo-700"
-                : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50",
+                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
             ].join(" ")}
           >
             <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,20 +183,20 @@ export function RegistrationsBlock() {
               ? `${formatShortDate(customStart)} — ${formatShortDate(customEnd)}`
               : "Период"}
             {isCustomActive && (
-              <span
-                role="button"
-                aria-label="Сбросить"
+              <button
+                type="button"
+                aria-label="Сбросить период"
                 onClick={(e) => { e.stopPropagation(); resetCustom(); }}
                 className="ml-0.5 text-indigo-400 hover:text-indigo-700"
               >
                 ×
-              </span>
+              </button>
             )}
           </button>
 
           {pickerOpen && (
-            <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-              <p className="mb-3 text-xs font-semibold text-gray-600">Произвольный период</p>
+            <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+              <p className="mb-3 text-xs font-semibold text-slate-600">Произвольный период</p>
               <div className="space-y-3">
                 <CalendarField
                   label="Начало"
@@ -226,6 +217,7 @@ export function RegistrationsBlock() {
                 <p className="mt-2 text-xs text-red-500">{customError}</p>
               )}
               <button
+                type="button"
                 onClick={handleApplyCustom}
                 className="mt-3 w-full rounded-lg bg-indigo-600 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 active:bg-indigo-800"
               >
@@ -237,11 +229,11 @@ export function RegistrationsBlock() {
       </div>
 
       {/* ── Body: metrics ── */}
-      <div className="flex items-stretch divide-x divide-gray-100 px-0 py-0">
+      <div className="flex flex-wrap divide-slate-100 sm:divide-x">
 
         {/* Новых за период */}
-        <div className="flex flex-col justify-center px-6 py-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Новых за период</p>
+        <div className="flex flex-1 flex-col justify-center border-b border-slate-100 px-6 py-5 sm:border-b-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Новых за период</p>
           {loading ? (
             <>
               <Skeleton className="mt-1 h-10 w-28" />
@@ -252,40 +244,53 @@ export function RegistrationsBlock() {
           ) : (
             <>
               <div className="mt-1 flex items-baseline gap-2.5">
-                <span className="text-4xl font-extrabold tracking-tight text-gray-900">
+                <span className="text-4xl font-extrabold tracking-tight text-slate-900">
                   {(data?.registrations ?? 0).toLocaleString("ru-RU")}
                 </span>
                 {growthPercent !== null && (
                   <span className={[
                     "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
-                    growthPercent > 0 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-gray-100 text-gray-500",
+                    growthPercent > 0 ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-slate-100 text-slate-500",
                   ].join(" ")}>
                     {growthPercent > 0 ? "↑" : ""}{growthPercent.toFixed(1)}% прироста
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xs text-gray-400">{periodLabel}</p>
+              <p className="mt-1 text-xs text-slate-400">{periodLabel}</p>
             </>
           )}
         </div>
 
         {/* Всего в базе */}
-        <div className="flex flex-col justify-center px-6 py-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Всего в базе</p>
+        <div className="flex flex-1 flex-col justify-center px-6 py-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Всего в базе</p>
           {loading ? (
             <>
               <Skeleton className="mt-1 h-10 w-24" />
               <Skeleton className="mt-1 h-3.5 w-20" />
             </>
-          ) : !error ? (
+          ) : error ? (
+            <p className="mt-1 text-sm text-slate-400">—</p>
+          ) : (
             <>
-              <p className="mt-1 text-4xl font-extrabold tracking-tight text-gray-700">
+              <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-700">
                 {(data?.total_users ?? 0).toLocaleString("ru-RU")}
               </p>
-              <p className="mt-1 text-xs text-gray-400">накопительно</p>
+              <p className="mt-1 text-xs text-slate-400">накопительно</p>
             </>
-          ) : null}
+          )}
         </div>
+
+        {/* В среднем в день */}
+        {avgPerDay !== null && !loading && !error && (
+          <div className="flex flex-1 flex-col justify-center border-t border-slate-100 px-6 py-5 sm:border-l sm:border-t-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">В среднем/день</p>
+            <p className="mt-1 text-4xl font-extrabold tracking-tight text-slate-700">
+              {avgPerDay.toLocaleString("ru-RU")}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">за {daysInPeriod} дн.</p>
+          </div>
+        )}
 
       </div>
 

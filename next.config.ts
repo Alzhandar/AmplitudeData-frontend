@@ -1,16 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    const backendBaseUrl = process.env.BACKEND_BASE_URL || "http://localhost:8000";
-
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${backendBaseUrl}/:path*`,
-      },
-    ];
-  },
+  // All backend proxying is handled by src/app/api/ routes.
+  // BACKEND_BASE_URL is read server-side by those routes and never exposed to the browser.
 };
 
 export default nextConfig;
