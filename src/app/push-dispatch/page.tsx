@@ -183,43 +183,69 @@ export default function PushDispatchPage() {
         </p>
 
         <div className="mt-5 space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+          {/* RU — обязательно */}
           <div className="space-y-4">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-700">Русский язык</span>
+              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">обязательно</span>
+            </div>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (RU)</span>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Заголовок</span>
+                <span className={`text-xs ${title.length > 55 ? "text-rose-500 font-semibold" : "text-slate-400"}`}>{title.length}/65</span>
+              </div>
               <input
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 placeholder="Например: Не забудьте про ваш приз"
+                maxLength={65}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Текст (RU)</span>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Текст</span>
+                <span className={`text-xs ${body.length > 180 ? "text-rose-500 font-semibold" : "text-slate-400"}`}>{body.length}/200</span>
+              </div>
               <textarea
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 rows={4}
                 placeholder="Текст уведомления на русском"
+                maxLength={200}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
               />
             </label>
           </div>
+          {/* KZ — необязательно */}
           <div className="space-y-4">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-700">Казахский язык</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">необязательно</span>
+            </div>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Заголовок (KZ)</span>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Заголовок</span>
+                <span className={`text-xs ${titleKz.length > 55 ? "text-rose-500 font-semibold" : "text-slate-400"}`}>{titleKz.length > 0 ? `${titleKz.length}/65` : ""}</span>
+              </div>
               <input
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 placeholder="Мысалы: Сыйлығыңызды ұмытпаңыз"
+                maxLength={65}
                 value={titleKz}
                 onChange={(e) => setTitleKz(e.target.value)}
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Текст (KZ)</span>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Текст</span>
+                <span className={`text-xs ${bodyKz.length > 180 ? "text-rose-500 font-semibold" : "text-slate-400"}`}>{bodyKz.length > 0 ? `${bodyKz.length}/200` : ""}</span>
+              </div>
               <textarea
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 rows={4}
                 placeholder="Хабарлама мәтіні қазақ тілінде"
+                maxLength={200}
                 value={bodyKz}
                 onChange={(e) => setBodyKz(e.target.value)}
               />
@@ -304,8 +330,11 @@ export default function PushDispatchPage() {
               </label>
 
               <span className="block text-xs text-slate-500">
-                К отправке подготовлено номеров из текста: {parsedPhones.length}
-                {excelFile ? " (плюс номера из Excel)" : ""}
+                {parsedPhones.length > 0
+                  ? `Из текста: ${parsedPhones.length} номеров${excelFile ? " + файл Excel" : ""}`
+                  : excelFile
+                    ? "Номера будут взяты из Excel"
+                    : "Введите номера или загрузите Excel"}
               </span>
             </div>
           ) : (

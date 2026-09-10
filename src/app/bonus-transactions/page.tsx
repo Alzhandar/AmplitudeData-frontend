@@ -9,6 +9,7 @@ import { BonusTransactionJob, BonusTransactionJobDetail } from "@/features/bonus
 import { AuthLoadingScreen } from "@/features/common/components/AuthLoadingScreen";
 import { CalendarField } from "@/features/common/components/CalendarField";
 import { Button } from "@/features/common/components/ui/Button";
+import { Modal, ModalCancelButton } from "@/features/common/components/ui/Modal";
 import { Skeleton } from "@/features/common/components/ui/Skeleton";
 import { StatusBadge } from "@/features/common/components/ui/StatusBadge";
 import { useToast } from "@/features/common/components/ui/Toast";
@@ -17,6 +18,7 @@ import { ErrorLogPanel } from "@/features/common/components/ui/ErrorLogPanel";
 import { translateErrorMessage } from "@/features/common/utils/error-messages";
 
 import { formatDateTime, getTodayIsoDate } from "@/features/common/utils/date";
+import { parsePhonesFromText } from "@/features/common/utils/format";
 
 export default function BonusTransactionsPage() {
   const { ready, authenticated, hasPageAccess, profile, allowedPages, logout } = useAuthGuard("bonus-transactions");
@@ -33,12 +35,14 @@ export default function BonusTransactionsPage() {
   const [activeJob, setActiveJob] = useState<BonusTransactionJobDetail | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const detailsRef = useRef<HTMLElement | null>(null);
   const excelInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeJobId = activeJob?.id;
   const activeJobStatus = activeJob?.status;
   const dateRangeInvalid = Boolean(startDate && expirationDate && expirationDate < startDate);
+  const parsedPhonesCount = useMemo(() => parsePhonesFromText(phonesText).length, [phonesText]);
 
   const canSubmit = useMemo(() => {
     if (!description.trim() || !amount.trim() || !startDate || !expirationDate || dateRangeInvalid) return false;
@@ -94,7 +98,7 @@ export default function BonusTransactionsPage() {
     }
   };
 
-  const submit = async () => {
+  const handleFormSubmit = () => {
     const numericAmount = Number(amount);
     if (!Number.isInteger(numericAmount) || numericAmount <= 0) {
       setFormError("Сумма должна быть положительным целым числом");
@@ -104,7 +108,12 @@ export default function BonusTransactionsPage() {
       setFormError("Дата окончания не может быть раньше даты начала");
       return;
     }
+    setFormError(null);
+    setShowConfirm(true);
+  };
 
+  const submit = async () => {
+    const numericAmount = Number(amount);
     setSubmitting(true);
     setFormError(null);
     try {
@@ -150,7 +159,7 @@ export default function BonusTransactionsPage() {
           <p className="mt-1 text-sm text-slate-500">
             Укажите параметры бонуса и добавьте номера телефонов вручную или через Excel
           </p>
-          <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="contents">
+          <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} className="contents">
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label className="block md:col-span-2">
@@ -165,15 +174,18 @@ export default function BonusTransactionsPage() {
 
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-slate-700">Сумма бонуса</span>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                type="number"
-                min={1}
-                step={1}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Например: 500"
-              />
+              <div className="flex items-center rounded-lg border border-slate-300 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400">
+                <input
+                  className="min-w-0 flex-1 rounded-l-lg bg-transparent px-3 py-2 text-sm outline-none"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Например: 500"
+                />
+                <span className="shrink-0 rounded-r-lg border-l border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">тг</span>
+              </div>
             </label>
 
             <CalendarField
@@ -237,18 +249,21 @@ export default function BonusTransactionsPage() {
               </div>
             </label>
 
-            <label className="md:col-span-2 block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">
-                Телефоны вручную (по одному в строке, можно через запятую)
-              </span>
+            <div className="md:col-span-2">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Телефоны вручную (по одному в строке, можно через запятую)</span>
+                {parsedPhonesCount > 0 && (
+                  <span className="text-xs font-medium text-indigo-600">Распознано: {parsedPhonesCount}</span>
+                )}
+              </div>
               <textarea
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 rows={5}
-                placeholder={"77071234567\n77075554433"}
+                placeholder={"Например:\n77071234567\n77075554433"}
                 value={phonesText}
                 onChange={(e) => setPhonesText(e.target.value)}
               />
-            </label>
+            </div>
           </div>
 
           {formError && (
@@ -301,7 +316,7 @@ export default function BonusTransactionsPage() {
                 </thead>
                 <tbody>
                   {jobs.map((job) => (
-                    <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
+                    <tr key={job.id} className={`border-b border-slate-100 transition last:border-b-0 ${activeJob?.id === job.id ? "bg-indigo-50" : "hover:bg-slate-50"}`}>
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
                       <td className="hidden sm:table-cell px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[260px] px-3 py-2.5">

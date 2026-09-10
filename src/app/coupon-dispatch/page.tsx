@@ -242,11 +242,19 @@ export default function CouponDispatchPage() {
               Готовые коды из Excel
             </button>
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            {isMarketingMode
-              ? "1) Укажите название купона и срок действия 2) Добавьте телефоны 3) Выберите акцию и отправьте"
-              : "1) Укажите название купона и срок действия 2) Загрузите Excel: колонка A телефон, колонка B код купона 3) Отправьте"}
-          </p>
+          {isMarketingMode ? (
+            <ol className="mt-2 space-y-0.5 pl-4 text-sm text-slate-500 list-decimal">
+              <li>Укажите название купона и срок действия</li>
+              <li>Добавьте список телефонов (вручную или Excel)</li>
+              <li>Выберите маркетинговую акцию и отправьте</li>
+            </ol>
+          ) : (
+            <ol className="mt-2 space-y-0.5 pl-4 text-sm text-slate-500 list-decimal">
+              <li>Укажите название купона и срок действия</li>
+              <li>Загрузите Excel: колонка A — телефон, колонка B — код купона</li>
+              <li>Нажмите «Отправить купоны»</li>
+            </ol>
+          )}
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label className="block">
@@ -340,6 +348,22 @@ export default function CouponDispatchPage() {
                 />
               </label>
 
+              {selectedSale && (
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="h-3.5 w-3.5 shrink-0 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="truncate text-sm font-medium text-indigo-800">{selectedSale.name || `Акция #${selectedSale.id}`}</span>
+                    <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">{selectedSale.available_coupons} купонов</span>
+                  </div>
+                  <button type="button" onClick={() => setSelectedSale(null)} className="shrink-0 text-indigo-400 hover:text-indigo-700" aria-label="Сбросить выбор">
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <div className="mt-3 max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white">
                 {salesLoading ? (
                   <div className="space-y-1 p-2">
@@ -376,13 +400,6 @@ export default function CouponDispatchPage() {
             </div>
           )}
 
-          {isMarketingMode && selectedSale && (
-            <p className="mt-3 text-sm text-slate-600">
-              Выбрана акция:{" "}
-              <span className="font-medium">{selectedSale.name || `#${selectedSale.id}`}</span>,
-              доступно купонов: {selectedSale.available_coupons}, срок действия: {formatIsoDate(validUntil)}
-            </p>
-          )}
 
           {formError && (
             <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
@@ -434,7 +451,7 @@ export default function CouponDispatchPage() {
                 </thead>
                 <tbody>
                   {jobs.map((job) => (
-                    <tr key={job.id} className="border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0">
+                    <tr key={job.id} className={`border-b border-slate-100 transition last:border-b-0 ${activeJob?.id === job.id ? "bg-indigo-50" : "hover:bg-slate-50"}`}>
                       <td className="px-3 py-2.5 text-slate-500">{formatDateTime(job.created_at)}</td>
                       <td className="hidden md:table-cell px-3 py-2.5 text-slate-600">{job.initiated_by_email || "-"}</td>
                       <td className="max-w-[200px] px-3 py-2.5">

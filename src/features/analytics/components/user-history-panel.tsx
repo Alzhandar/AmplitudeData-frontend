@@ -57,7 +57,7 @@ function compactTimesByInterval(times: string[], minIntervalMinutes: number): st
 }
 
 function getDisplayName(row: DailyActivityItem): string {
-  return row.phone_number || row.user_id || row.device_id || "Unknown";
+  return row.phone_number || row.user_id || row.device_id || "—";
 }
 
 export function UserHistoryPanel({
@@ -145,9 +145,12 @@ export function UserHistoryPanel({
               <button
                 type="button"
                 onClick={onLoadHistory}
-                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
               >
-                Загрузить
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Обновить
               </button>
             </div>
 

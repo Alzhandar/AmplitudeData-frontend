@@ -49,6 +49,26 @@ export default function Home() {
     setSelectedRow(row);
     setHistoryRows([]);
     setHistoryError(null);
+    // Auto-load history immediately so user doesn't need to click "Загрузить"
+    if (row.phone_number) {
+      void (async () => {
+        setHistoryLoading(true);
+        try {
+          const today = getTodayIsoDate();
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          const rows = await analyticsApi.visitSearchByPhones({
+            start_date: sevenDaysAgo,
+            end_date: today,
+            phones: [row.phone_number as string],
+          });
+          setHistoryRows(rows);
+        } catch (err) {
+          setHistoryError(err instanceof Error ? err.message : getNetworkErrorMessage(err));
+        } finally {
+          setHistoryLoading(false);
+        }
+      })();
+    }
   }
 
   async function handleLoadHistory() {
