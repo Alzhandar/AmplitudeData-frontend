@@ -280,6 +280,36 @@ export default function BonusTransactionsPage() {
           </form>
         </section>
 
+        {/* Confirm submit modal */}
+        <Modal
+          open={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          title="Подтверждение начисления"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-2">
+              <ModalCancelButton onClick={() => setShowConfirm(false)} disabled={submitting} />
+              <Button
+                loading={submitting}
+                onClick={() => {
+                  setShowConfirm(false);
+                  void submit();
+                }}
+              >
+                Начислить
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-slate-600">
+            Начислить <span className="font-semibold text-slate-900">{amount} тг</span> по{" "}
+            <span className="font-semibold text-slate-900">
+              {excelFile ? `файлу «${excelFile.name}»` : `${parsedPhonesCount} номер(ам)`}
+            </span>
+            ? Период действия: {startDate} – {expirationDate}.
+          </p>
+        </Modal>
+
         {/* Job history */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">История начислений</h3>

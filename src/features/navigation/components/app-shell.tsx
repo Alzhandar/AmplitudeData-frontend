@@ -59,6 +59,19 @@ const NAV_GROUPS: { id: string; label?: string; items: NavItem[] }[] = [
           </svg>
         ),
       },
+      {
+        page: "employee-discount-check",
+        href: "/employee-discount-check",
+        label: "Проверка скидки сотрудника",
+        shortLabel: "Скидка",
+        icon: (active) => (
+          <svg className={`h-4 w-4 ${iconClass(active)}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="7.5" cy="7.5" r="2" />
+            <circle cx="16.5" cy="16.5" r="2" />
+            <path d="M6 18L18 6" strokeLinecap="round" />
+          </svg>
+        ),
+      },
     ],
   },
   {
