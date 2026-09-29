@@ -11,6 +11,7 @@ import { AuthLoadingScreen } from "@/features/common/components/AuthLoadingScree
 import { Button } from "@/features/common/components/ui/Button";
 import { Modal, ModalCancelButton } from "@/features/common/components/ui/Modal";
 import { useToast } from "@/features/common/components/ui/Toast";
+import { normalizePhone } from "@/features/common/utils/format";
 
 function isPhoneHeaderLabel(value: string): boolean {
   const cleaned = value
@@ -37,14 +38,6 @@ function isPhoneHeaderLabel(value: string): boolean {
   ]);
 
   return candidates.has(cleaned) || candidates.has(compact);
-}
-
-function normalizePhone(rawValue: string): string {
-  const digits = rawValue.replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.length === 11 && digits.startsWith("8")) return `7${digits.slice(1)}`;
-  if (digits.length === 11 && digits.startsWith("7")) return digits;
-  return "";
 }
 
 function parsePhones(text: string): string[] {

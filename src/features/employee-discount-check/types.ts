@@ -16,3 +16,23 @@ export type EmployeeDiscountCheckResponse = {
   restaurant: DiscountScopeResult;
   park: DiscountScopeResult;
 };
+
+export type EmployeePhoneChangeResponse = {
+  employee_id: string;
+  employee_name?: string;
+  old_phone: string;
+  new_phone: string;
+};
+
+export type EmployeeMatchedBy = "phone" | "iin" | "none";
+
+export type EmployeeLookupResponse = {
+  found: boolean;
+  matched_by: EmployeeMatchedBy;
+  employee_id?: string;
+  employee_name?: string;
+  employee_department?: string;
+  employee_position?: string;
+  current_phone?: string;
+  iin?: string;
+};
