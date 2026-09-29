@@ -522,7 +522,7 @@ export default function CouponDispatchPage() {
                       <tr className="border-b border-slate-200 text-left text-slate-400">
                         <th className="px-3 py-2">Телефон</th>
                         <th className="hidden sm:table-cell px-3 py-2">Имя гостя</th>
-                        <th className="hidden sm:table-cell px-3 py-2">Купон</th>
+                        <th className="px-3 py-2">Купон</th>
                         <th className="px-3 py-2">Статус</th>
                         <th className="px-3 py-2">Ошибка</th>
                       </tr>
@@ -532,7 +532,7 @@ export default function CouponDispatchPage() {
                         <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
                           <td className="px-3 py-2">{row.phone_normalized || row.phone_raw || "-"}</td>
                           <td className="hidden sm:table-cell px-3 py-2">{formatGuestName(row)}</td>
-                          <td className="hidden sm:table-cell px-3 py-2">{row.coupon_code || "-"}</td>
+                          <td className="px-3 py-2">{row.coupon_code || "-"}</td>
                           <td className="px-3 py-2">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.success ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                               {row.success ? "Отправлено" : "Не отправлено"}
